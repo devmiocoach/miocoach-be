@@ -1,0 +1,28 @@
+{
+	"name": "app-modules/users",
+	"description": "",
+	"type": "library",
+	"version": "1.0",
+	"license": "proprietary",
+	"require": {},
+	"autoload": {
+		"psr-4": {
+			"App\\Modules\\Users\\": "src/",
+			"App\\Modules\\Users\\Database\\Factories\\": "database/factories/",
+			"App\\Modules\\Users\\Database\\Seeders\\": "database/seeders/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"App\\Modules\\Users\\Tests\\": "tests/"
+		}
+	},
+	"minimum-stability": "stable",
+	"extra": {
+		"laravel": {
+			"providers": [
+				"App\\Modules\\Users\\Providers\\UsersServiceProvider"
+			]
+		}
+	}
+}
