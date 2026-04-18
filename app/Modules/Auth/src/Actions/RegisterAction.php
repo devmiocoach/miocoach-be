@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisterAction
 {
-    public function handle(array $data, string $deviceType = 'web', ?string $deviceName = null): array
+    public function handle(array $data, string $role = 'client', string $deviceType = 'web', ?string $deviceName = null): array
     {
         $user = User::create([
             'name'     => $data['name'],
@@ -16,7 +16,7 @@ class RegisterAction
             'password' => Hash::make($data['password']),
         ]);
 
-        $user->assignRole($data['role'] ?? 'client');
+        $user->assignRole($role);
 
         event(new Registered($user));
 

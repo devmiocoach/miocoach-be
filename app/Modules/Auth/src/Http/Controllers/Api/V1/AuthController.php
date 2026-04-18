@@ -7,8 +7,10 @@ use App\Modules\Auth\Actions\LoginAction;
 use App\Modules\Auth\Actions\LogoutAction;
 use App\Modules\Auth\Actions\RefreshTokenAction;
 use App\Modules\Auth\Actions\RegisterAction;
+use App\Modules\Auth\Actions\RegisterCoachAction;
 use App\Modules\Auth\Actions\RevokeAllTokensAction;
 use App\Modules\Auth\Http\Requests\LoginRequest;
+use App\Modules\Auth\Http\Requests\RegisterCoachRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
 use App\Modules\Auth\Http\Resources\AuthTokenResource;
 use Illuminate\Http\JsonResponse;
@@ -32,7 +34,19 @@ class AuthController extends Controller
         return response()->json(new AuthTokenResource($result));
     }
 
-    public function register(RegisterRequest $request, RegisterAction $action): JsonResponse
+    public function registerClient(RegisterRequest $request, RegisterAction $action): JsonResponse
+    {
+        $result = $action->handle(
+            data: $request->validated(),
+            role: 'client',
+            deviceType: $request->device_type ?? 'web',
+            deviceName: $request->device_name,
+        );
+
+        return response()->json(new AuthTokenResource($result), 201);
+    }
+
+    public function registerCoach(RegisterCoachRequest $request, RegisterCoachAction $action): JsonResponse
     {
         $result = $action->handle(
             data: $request->validated(),

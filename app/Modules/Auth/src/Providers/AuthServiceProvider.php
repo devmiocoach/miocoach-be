@@ -6,6 +6,7 @@ use App\Modules\Auth\Services\AccountLockoutService;
 use App\Modules\Auth\Services\RateLimiterService;
 use App\Modules\Auth\Services\TokenBlacklistService;
 use Illuminate\Cache\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -23,6 +24,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+
+        Route::middleware('api')->group(__DIR__ . '/../../routes/api.php');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Modules\Auth\Actions;
 
 use App\Models\User;
 use App\Modules\Auth\Services\TokenBlacklistService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RefreshTokenAction
@@ -26,10 +27,23 @@ class RefreshTokenAction
             ]);
         }
 
-        $this->blacklist->add($currentToken);
+        $accessToken = $user->currentAccessToken();
 
-        $user->currentAccessToken()->delete();
-        $newToken = $user->createToken($deviceName ?? 'mobile-device');
+        if (! $accessToken) {
+            throw ValidationException::withMessages([
+                'token' => ['Token non valido.'],
+            ]);
+        }
+
+        // Delete old and create new atomically; blacklist AFTER success so that
+        // a DB failure doesn't leave the user locked out with no valid token.
+        $newToken = DB::transaction(function () use ($user, $accessToken, $deviceName) {
+            $accessToken->delete();
+
+            return $user->createToken($deviceName ?? 'mobile-device');
+        });
+
+        $this->blacklist->add($currentToken);
 
         return [
             'access_token' => $newToken->plainTextToken,

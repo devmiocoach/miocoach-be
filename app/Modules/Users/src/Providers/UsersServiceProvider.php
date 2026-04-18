@@ -12,6 +12,8 @@ class UsersServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+
+        // Il gruppo 'api' applica SubstituteBindings (necessario per route model binding)
+        Route::middleware('api')->group(__DIR__ . '/../../routes/api.php');
     }
 }

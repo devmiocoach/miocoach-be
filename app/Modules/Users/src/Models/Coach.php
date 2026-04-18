@@ -16,25 +16,53 @@ class Coach extends Model
     protected $fillable = [
         'user_id',
         'slug',
+
+        // Profilo pubblico
         'bio',
         'description',
-        'specialization',
+        'website_url',
+        'specializations',
         'certifications',
-        'hourly_rate',
+        'social_links',
+        'years_of_experience',
+
+        // Contatti e sede
+        'phone',
+        'address',
         'city',
+        'province',
+
+        // Tariffe e capacità
+        'hourly_rate',
+        'max_clients',
+
+        // Dati fiscali
+        'ragione_sociale',
+        'p_iva',
+        'codice_fiscale',
+        'tax_regime',
+        'sdi_code',
+        'pec',
+
+        // Pagamenti
+        'stripe_connect_id',
+        'stripe_onboarding_completed',
+
+        // Stato
         'is_verified',
         'is_visible',
-        'social_links',
     ];
 
     protected function casts(): array
     {
         return [
-            'certifications' => 'array',
-            'social_links'   => 'array',
-            'is_verified'    => 'boolean',
-            'is_visible'     => 'boolean',
-            'hourly_rate'    => 'decimal:2',
+            'specializations'             => 'array',
+            'certifications'              => 'array',
+            'social_links'                => 'array',
+            'hourly_rate'                 => 'decimal:2',
+            'is_verified'                 => 'boolean',
+            'is_visible'                  => 'boolean',
+            'stripe_onboarding_completed' => 'boolean',
         ];
     }
 
@@ -46,5 +74,15 @@ class Coach extends Model
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(CoachInvitation::class);
+    }
+
+    public function pendingInvitations(): HasMany
+    {
+        return $this->hasMany(CoachInvitation::class)->where('status', 'pending');
     }
 }

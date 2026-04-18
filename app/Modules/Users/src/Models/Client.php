@@ -44,6 +44,6 @@ class Client extends Model
 
     public function coach(): BelongsTo
     {
-        return $this->belongsTo(Coach::class);
+        return $this->belongsTo(Coach::class)->withDefault();
     }
 }

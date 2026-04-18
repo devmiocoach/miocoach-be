@@ -2,6 +2,7 @@
 
 use App\Modules\Auth\Http\Controllers\Api\V1\AuthController;
 use App\Modules\Auth\Http\Controllers\Api\V1\EmailVerificationController;
+use App\Modules\Auth\Http\Controllers\Api\V1\InvitationController;
 use App\Modules\Auth\Http\Controllers\Api\V1\PasswordController;
 use App\Modules\Auth\Http\Controllers\Api\V1\TwoFactorController;
 use Illuminate\Support\Facades\Route;
@@ -13,10 +14,24 @@ Route::prefix('api/v1/auth')->name('auth.')->group(function () {
         ->middleware('throttle:10,1')
         ->name('login');
 
-    // Register: 10 tentativi ogni 10 minuti per IP
-    Route::post('register', [AuthController::class, 'register'])
+    // Registrazione client diretta
+    Route::post('register/client', [AuthController::class, 'registerClient'])
         ->middleware('throttle:10,10')
-        ->name('register');
+        ->name('register.client');
+
+    // Registrazione coach
+    Route::post('register/coach', [AuthController::class, 'registerCoach'])
+        ->middleware('throttle:10,10')
+        ->name('register.coach');
+
+    // Registrazione via invito coach (pubblica, token monouso)
+    Route::get('invite/{token}', [InvitationController::class, 'validate'])
+        ->middleware('throttle:20,1')
+        ->name('invite.validate');
+
+    Route::post('invite/{token}/register', [InvitationController::class, 'register'])
+        ->middleware('throttle:10,10')
+        ->name('invite.register');
 
     // Forgot password: 5 richieste ogni 15 minuti per IP (anti email flooding)
     Route::post('forgot-password', [PasswordController::class, 'forgotPassword'])
