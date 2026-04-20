@@ -24,6 +24,8 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::get('clients', [CoachController::class, 'clients'])->middleware('throttle:60,1')->name('clients');
         Route::post('clients', [CoachController::class, 'store'])->middleware('throttle:30,1')->name('clients.store');
         Route::get('clients/{client}', [CoachClientController::class, 'show'])->middleware('throttle:60,1')->name('clients.show');
+        Route::put('clients/{client}', [CoachClientController::class, 'update'])->middleware('throttle:30,1')->name('clients.update');
+        Route::delete('clients/{client}', [CoachClientController::class, 'destroy'])->middleware('throttle:20,1')->name('clients.destroy');
         Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
         Route::put('availability', [AvailabilityController::class, 'replace'])->middleware('throttle:20,1')->name('availability');
         Route::post('certifications', [CertificationController::class, 'store'])->middleware('throttle:20,1')->name('certifications.store');

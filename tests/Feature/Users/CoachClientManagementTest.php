@@ -179,4 +179,34 @@ class CoachClientManagementTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_coach_can_update_client(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser();
+        [$clientUser, $client] = $this->createClientForCoach($coach);
+
+        $response = $this->actingAsCoach($coachUser)
+            ->putJson("/api/v1/coaches/me/clients/{$client->id}", [
+                'phone'     => '+39 333 9999999',
+                'tags'      => ['vip', 'online'],
+                'weight_kg' => 75.5,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.phone', '+39 333 9999999')
+            ->assertJsonPath('data.tags.0', 'vip')
+            ->assertJsonPath('data.weight_kg', '75.50');
+    }
+
+    public function test_coach_can_soft_delete_client(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser();
+        [$clientUser, $client] = $this->createClientForCoach($coach);
+
+        $response = $this->actingAsCoach($coachUser)
+            ->deleteJson("/api/v1/coaches/me/clients/{$client->id}");
+
+        $response->assertNoContent();
+        $this->assertSoftDeleted('clients', ['id' => $client->id]);
+    }
 }
