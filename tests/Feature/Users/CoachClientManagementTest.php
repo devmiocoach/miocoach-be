@@ -146,4 +146,37 @@ class CoachClientManagementTest extends TestCase
             'status'   => 'pending',
         ]);
     }
+
+    public function test_coach_can_get_full_client_card(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser();
+        [$clientUser, $client] = $this->createClientForCoach($coach, ['name' => 'Sara Neri'], [
+            'phone' => '+39 340 1234567',
+            'tags'  => ['premium'],
+        ]);
+
+        $response = $this->actingAsCoach($coachUser)
+            ->getJson("/api/v1/coaches/me/clients/{$client->id}");
+
+        $response->assertOk()
+            ->assertJsonPath('data.id', $client->id)
+            ->assertJsonPath('data.first_name', 'Sara')
+            ->assertJsonPath('data.phone', '+39 340 1234567')
+            ->assertJsonPath('data.tags.0', 'premium')
+            ->assertJsonPath('data.anamnesis', null)
+            ->assertJsonPath('data.notes', [])
+            ->assertJsonPath('data.files', []);
+    }
+
+    public function test_coach_cannot_get_another_coachs_client(): void
+    {
+        [$coachUser, $coach]   = $this->createCoachUser();
+        [$coach2User, $coach2] = $this->createCoachUser();
+        [$clientUser, $client] = $this->createClientForCoach($coach2);
+
+        $response = $this->actingAsCoach($coachUser)
+            ->getJson("/api/v1/coaches/me/clients/{$client->id}");
+
+        $response->assertForbidden();
+    }
 }

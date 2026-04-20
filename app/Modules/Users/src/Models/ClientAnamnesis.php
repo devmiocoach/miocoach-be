@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClientAnamnesis extends Model
 {
+    protected $table = 'client_anamnesis';
+
     protected $fillable = ['content_encrypted', 'iv', 'tag'];
 
     protected $hidden = ['content_encrypted', 'iv', 'tag'];
