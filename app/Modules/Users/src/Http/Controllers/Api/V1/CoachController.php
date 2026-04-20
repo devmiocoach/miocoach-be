@@ -91,7 +91,7 @@ class CoachController extends Controller
 
         $query->orderByRaw('subscription_expires_at IS NULL, subscription_expires_at ASC');
 
-        $limit   = min((int) $request->input('limit', 20), 100);
+        $limit = max(1, min((int) $request->input('limit', 20), 100));
         $clients = $query->paginate($limit);
 
         return response()->json(ClientResource::collection($clients)->response()->getData(true));
