@@ -25,11 +25,17 @@ class UpdateCoachProfileRequest extends FormRequest
 
         return [
             // Profilo pubblico
+            'display_name'               => ['sometimes', 'nullable', 'string', 'max:255'],
             'bio'                        => ['sometimes', 'nullable', 'string', 'max:500'],
+            'tagline'                    => ['sometimes', 'nullable', 'string', 'max:150'],
             'description'                => ['sometimes', 'nullable', 'string', 'max:3000'],
             'website_url'                => ['sometimes', 'nullable', 'url', 'max:255'],
+            'intro_video_url'            => ['sometimes', 'nullable', 'url', 'max:255'],
+            'instagram_url'              => ['sometimes', 'nullable', 'url', 'max:255'],
             'specializations'            => ['sometimes', 'nullable', 'array'],
             'specializations.*'          => ['string', 'max:100'],
+            'languages'                  => ['sometimes', 'nullable', 'array'],
+            'languages.*'                => ['string', 'max:10'],
             'certifications'             => ['sometimes', 'nullable', 'array'],
             'certifications.*.name'      => ['required_with:certifications', 'string', 'max:255'],
             'certifications.*.issuer'    => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -41,6 +47,7 @@ class UpdateCoachProfileRequest extends FormRequest
             'social_links.linkedin'      => ['sometimes', 'nullable', 'url', 'max:255'],
             'social_links.twitter'       => ['sometimes', 'nullable', 'url', 'max:255'],
             'years_of_experience'        => ['sometimes', 'nullable', 'integer', 'min:0', 'max:60'],
+            'mode'                       => ['sometimes', 'nullable', 'in:online,in_person,hybrid'],
 
             // Contatti e sede
             'phone'    => ['sometimes', 'nullable', 'regex:/^[+]?[\d\s\-()]{7,20}$/'],
@@ -49,9 +56,11 @@ class UpdateCoachProfileRequest extends FormRequest
             'province' => ['sometimes', 'nullable', 'string', 'size:2', 'alpha'],
 
             // Tariffe e capacità
-            'hourly_rate' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:9999.99'],
-            'max_clients' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:500'],
-            'is_visible'  => ['sometimes', 'boolean'],
+            'hourly_rate'               => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:9999.99'],
+            'price_per_session'         => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:9999.99'],
+            'cancellation_window_hours' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:168'],
+            'max_clients'               => ['sometimes', 'nullable', 'integer', 'min:1', 'max:500'],
+            'is_visible'                => ['sometimes', 'boolean'],
 
             // Dati fiscali
             'ragione_sociale' => ['sometimes', 'nullable', 'string', 'max:255'],
