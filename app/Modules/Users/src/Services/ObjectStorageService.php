@@ -16,7 +16,7 @@ class ObjectStorageService
         $ext  = $file->getClientOriginalExtension();
         $path = $folder . '/' . $uuid . '.' . $ext;
 
-        Storage::disk($this->disk)->put($path, $file->get());
+        Storage::disk($this->disk)->put($path, $file->get(), 'public');
 
         $cdnBase = rtrim(config('app.cdn_base_url', ''), '/');
 

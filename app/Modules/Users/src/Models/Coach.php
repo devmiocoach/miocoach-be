@@ -26,7 +26,6 @@ class Coach extends Model
         'intro_video_url',
         'specializations',
         'languages',
-        'certifications',
         'social_links',
         'years_of_experience',
         'mode',
@@ -63,7 +62,6 @@ class Coach extends Model
         return [
             'specializations'             => 'array',
             'languages'                   => 'array',
-            'certifications'              => 'array',
             'social_links'                => 'array',
             'years_of_experience'         => 'integer',
             'hourly_rate'                 => 'decimal:2',

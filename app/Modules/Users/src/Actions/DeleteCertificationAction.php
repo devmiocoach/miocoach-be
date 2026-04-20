@@ -11,7 +11,8 @@ class DeleteCertificationAction
 
     public function handle(Certification $certification): void
     {
-        $this->storage->delete($certification->storage_path);
+        $storagePath = $certification->storage_path;
         $certification->delete();
+        $this->storage->delete($storagePath);
     }
 }

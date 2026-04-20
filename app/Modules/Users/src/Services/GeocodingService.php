@@ -16,9 +16,13 @@ class GeocodingService
             'limit'  => 1,
         ]);
 
+        if (! $response->successful()) {
+            return null;
+        }
+
         $results = $response->json();
 
-        if (empty($results)) {
+        if (empty($results) || ! is_array($results)) {
             return null;
         }
 
