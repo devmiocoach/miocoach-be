@@ -95,4 +95,55 @@ class CoachClientManagementTest extends TestCase
             ->assertJsonPath('data.0.phone', '+39 333 0000000')
             ->assertJsonPath('data.0.tags.0', 'vip');
     }
+
+    public function test_coach_can_create_client_for_existing_user(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser();
+
+        $existingUser = \App\Models\User::factory()->create([
+            'name'              => 'Lucia Verdi',
+            'email'             => 'lucia@test.com',
+            'email_verified_at' => now(),
+        ]);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
+        $existingUser->assignRole('client');
+        $existingClient = new \App\Modules\Users\Models\Client();
+        $existingClient->user_id   = $existingUser->id;
+        $existingClient->joined_at = now();
+        $existingClient->save();
+
+        $response = $this->actingAsCoach($coachUser)
+            ->postJson('/api/v1/coaches/me/clients', [
+                'email'      => 'lucia@test.com',
+                'first_name' => 'Lucia',
+                'last_name'  => 'Verdi',
+            ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('clients', [
+            'user_id'  => $existingUser->id,
+            'coach_id' => $coach->id,
+        ]);
+    }
+
+    public function test_coach_create_client_with_new_email_sends_invitation(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+
+        [$coachUser, $coach] = $this->createCoachUser();
+
+        $response = $this->actingAsCoach($coachUser)
+            ->postJson('/api/v1/coaches/me/clients', [
+                'email'      => 'newclient@test.com',
+                'first_name' => 'Nuovo',
+                'last_name'  => 'Cliente',
+            ]);
+
+        $response->assertStatus(202);
+        $this->assertDatabaseHas('coach_invitations', [
+            'coach_id' => $coach->id,
+            'email'    => 'newclient@test.com',
+            'status'   => 'pending',
+        ]);
+    }
 }

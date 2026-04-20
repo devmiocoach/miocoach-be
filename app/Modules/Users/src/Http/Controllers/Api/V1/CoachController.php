@@ -3,8 +3,10 @@
 namespace App\Modules\Users\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Users\Actions\CreateClientAction;
 use App\Modules\Users\Actions\PublishCoachProfileAction;
 use App\Modules\Users\Actions\UpdateCoachProfileAction;
+use App\Modules\Users\Http\Requests\CreateClientRequest;
 use App\Modules\Users\Http\Requests\UpdateCoachProfileRequest;
 use App\Modules\Users\Http\Resources\ClientResource;
 use App\Modules\Users\Http\Resources\CoachResource;
@@ -95,5 +97,24 @@ class CoachController extends Controller
         $clients = $query->paginate($limit);
 
         return response()->json(ClientResource::collection($clients)->response()->getData(true));
+    }
+
+    public function store(CreateClientRequest $request, CreateClientAction $action): JsonResponse
+    {
+        $coach = $request->user()->coach;
+
+        if (! $coach) {
+            return response()->json(['message' => 'Profilo coach non trovato.'], 404);
+        }
+
+        $result = $action->handle($coach, $request->validated());
+
+        if ($result['status'] === 'invited') {
+            return response()->json([
+                'message' => "Invito inviato. Il cliente riceverà un'email per completare la registrazione.",
+            ], 202);
+        }
+
+        return response()->json(['data' => new ClientResource($result['client'])], 201);
     }
 }
