@@ -2,18 +2,27 @@
 
 namespace App\Modules\Auth\Actions;
 
+use App\Models\User;
+use App\Modules\Auth\Services\JwtService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordAction
 {
+    public function __construct(private readonly JwtService $jwt) {}
+
     public function handle(string $email): void
     {
-        // Invia il link senza rivelare se l'email esiste o meno (anti user enumeration)
-        $status = Password::sendResetLink(['email' => $email]);
+        $user = User::where('email', mb_strtolower($email))->first();
 
-        if ($status !== Password::RESET_LINK_SENT) {
-            Log::info('Password reset requested for unknown/failed email', ['email' => $email, 'status' => $status]);
+        if (! $user) {
+            // Anti-enumeration: always succeed silently
+            Log::info('Password reset requested for unknown email', ['email' => $email]);
+
+            return;
         }
+
+        $token = $this->jwt->generatePasswordResetToken($user->email);
+
+        $user->sendPasswordResetNotification($token);
     }
 }

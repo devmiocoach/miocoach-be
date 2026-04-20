@@ -130,7 +130,10 @@ return [
     |
     */
 
-    'views' => true,
+    // Disabilitato: l'app usa Next.js/Flutter come frontend, non Blade views.
+    // Fortify è usato solo per 2FA TOTP via API; le route web (login, register,
+    // reset-password) sono gestite dai moduli Auth e Users.
+    'views' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -144,15 +147,13 @@ return [
     */
 
     'features' => [
-        Features::registration(),
-        Features::resetPasswords(),
-        // Features::emailVerification(),
-        Features::updateProfileInformation(),
-        Features::updatePasswords(),
+        // registration, resetPasswords, updateProfileInformation e updatePasswords
+        // sono gestiti dai moduli Auth e Users con endpoint API dedicati.
+        // Fortify gestisce solo 2FA TOTP (EnableTwoFactorAuthentication,
+        // ConfirmTwoFactorAuthentication, DisableTwoFactorAuthentication).
         Features::twoFactorAuthentication([
             'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0,
+            'confirmPassword' => false, // la conferma password è gestita manualmente in TwoFactorController
         ]),
     ],
 

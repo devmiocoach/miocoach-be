@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Cache;
 
 class AccountLockoutService
 {
-    private const MAX_FAILURES    = 10;
-    private const LOCKOUT_MINUTES = 30;
+    private const MAX_FAILURES    = 5;  // spec: 5 failures
+    private const LOCKOUT_MINUTES = 15; // spec: 15 minutes
     private const PREFIX          = 'account_lockout:';
 
     public function increment(string $email): void

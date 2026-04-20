@@ -114,4 +114,23 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | JWT Configuration
+    |--------------------------------------------------------------------------
+    |
+    | RS256 JWT access tokens are used for stateless API authentication.
+    | Private/public keys are stored as Base64-encoded strings in .env.
+    |
+    */
+
+    'jwt' => [
+        'private_key' => base64_decode(env('JWT_PRIVATE_KEY', '')),
+        'public_key'  => base64_decode(env('JWT_PUBLIC_KEY', '')),
+        'access_ttl'  => 15 * 60,       // 15 minutes in seconds
+        'temp_ttl'    => 5 * 60,        // 5 minutes for 2FA pending token
+        'reset_ttl'   => 60 * 60,       // 1 hour for password reset
+        'verify_ttl'  => 24 * 60 * 60,  // 24 hours for email verification
+    ],
+
 ];

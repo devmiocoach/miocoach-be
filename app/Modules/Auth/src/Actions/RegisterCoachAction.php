@@ -14,7 +14,7 @@ class RegisterCoachAction
         private readonly CreateCoachProfileAction $createCoachProfile,
     ) {}
 
-    public function handle(array $data, string $deviceType = 'web', ?string $deviceName = null): array
+    public function handle(array $data): void
     {
         // Transazione limitata alle sole scritture DB — l'evento viene sparato dopo
         // il commit per evitare che job accodati (es. email verifica) vengano
@@ -33,22 +33,6 @@ class RegisterCoachAction
             return $user;
         });
 
-        event(new Registered($user));
-
-        if ($deviceType === 'mobile') {
-            $token = $user->createToken($deviceName ?? 'mobile-device');
-            return [
-                'access_token' => $token->plainTextToken,
-                'token_type'   => 'Bearer',
-                'user'         => ['id' => $user->id, 'role' => 'coach'],
-            ];
-        }
-
-        auth()->login($user);
-        session()->regenerate();
-
-        return [
-            'user' => ['id' => $user->id, 'role' => 'coach'],
-        ];
+        event(new Registered($user)); // triggers email verification notification
     }
 }

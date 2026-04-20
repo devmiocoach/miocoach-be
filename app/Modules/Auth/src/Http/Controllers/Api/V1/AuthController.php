@@ -12,7 +12,6 @@ use App\Modules\Auth\Actions\RevokeAllTokensAction;
 use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Requests\RegisterCoachRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
-use App\Modules\Auth\Http\Resources\AuthTokenResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,61 +20,78 @@ class AuthController extends Controller
     public function login(LoginRequest $request, LoginAction $action): JsonResponse
     {
         $result = $action->handle(
-            email: $request->email,
-            password: $request->password,
-            deviceType: $request->device_type ?? 'web',
+            email:      $request->email,
+            password:   $request->password,
             deviceName: $request->device_name,
         );
 
         if (isset($result['two_factor_required'])) {
-            return response()->json(['two_factor_required' => true, 'email' => $result['email']]);
+            return response()->json([
+                'two_factor_required' => true,
+                'temp_token'          => $result['temp_token'],
+            ]);
         }
 
-        return response()->json(new AuthTokenResource($result));
+        return $this->tokenResponse($result['access_token'], $result['refresh_token']);
     }
 
     public function registerClient(RegisterRequest $request, RegisterAction $action): JsonResponse
     {
-        $result = $action->handle(
-            data: $request->validated(),
-            role: 'client',
-            deviceType: $request->device_type ?? 'web',
-            deviceName: $request->device_name,
-        );
+        $action->handle(data: $request->validated(), role: 'client');
 
-        return response()->json(new AuthTokenResource($result), 201);
+        return response()->json(['message' => 'Controlla la tua email per verificare il tuo account.'], 201);
     }
 
     public function registerCoach(RegisterCoachRequest $request, RegisterCoachAction $action): JsonResponse
     {
-        $result = $action->handle(
-            data: $request->validated(),
-            deviceType: $request->device_type ?? 'web',
-            deviceName: $request->device_name,
-        );
+        $action->handle(data: $request->validated());
 
-        return response()->json(new AuthTokenResource($result), 201);
+        return response()->json(['message' => 'Controlla la tua email per verificare il tuo account.'], 201);
     }
 
     public function logout(Request $request, LogoutAction $action): JsonResponse
     {
-        $action->handle($request->user(), $request->device_type ?? 'web');
+        $refreshToken = $request->cookie('refresh_token');
+        $action->handle($request->user(), $refreshToken);
 
-        return response()->json(['message' => 'Logout effettuato con successo.']);
+        return response()
+            ->json(['message' => 'Logout effettuato con successo.'])
+            ->withoutCookie('refresh_token');
     }
 
     public function refresh(Request $request, RefreshTokenAction $action): JsonResponse
     {
-        $currentToken = $request->bearerToken();
-        $result = $action->handle($request->user(), $currentToken, $request->input('device_name'));
+        $refreshToken = $request->cookie('refresh_token');
+        $result       = $action->handle($request->user(), $refreshToken, $request->input('device_name'));
 
-        return response()->json(new AuthTokenResource($result));
+        return $this->tokenResponse($result['access_token'], $result['refresh_token']);
     }
 
     public function logoutAll(Request $request, RevokeAllTokensAction $action): JsonResponse
     {
         $action->handle($request->user());
 
-        return response()->json(['message' => 'Tutti i token sono stati revocati.']);
+        return response()
+            ->json(['message' => 'Tutti i token sono stati revocati.'])
+            ->withoutCookie('refresh_token');
+    }
+
+    private function tokenResponse(string $accessToken, string $refreshToken): JsonResponse
+    {
+        return response()
+            ->json([
+                'access_token' => $accessToken,
+                'token_type'   => 'Bearer',
+                'expires_in'   => config('auth.jwt.access_ttl'),
+            ])
+            ->withCookie(cookie(
+                name:     'refresh_token',
+                value:    $refreshToken,
+                minutes:  60 * 24 * 30,
+                path:     '/api/v1/auth',
+                secure:   true,
+                httpOnly: true,
+                sameSite: 'Strict',
+            ));
     }
 }

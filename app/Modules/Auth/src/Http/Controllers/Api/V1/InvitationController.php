@@ -5,7 +5,6 @@ namespace App\Modules\Auth\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Modules\Auth\Actions\RegisterViaInviteAction;
 use App\Modules\Auth\Http\Requests\RegisterViaInviteRequest;
-use App\Modules\Auth\Http\Resources\AuthTokenResource;
 use App\Modules\Users\Models\CoachInvitation;
 use Illuminate\Http\JsonResponse;
 
@@ -29,13 +28,11 @@ class InvitationController extends Controller
 
     public function register(string $token, RegisterViaInviteRequest $request, RegisterViaInviteAction $action): JsonResponse
     {
-        $result = $action->handle(
+        $action->handle(
             token: $token,
-            data: $request->validated(),
-            deviceType: $request->device_type ?? 'web',
-            deviceName: $request->device_name,
+            data:  $request->validated(),
         );
 
-        return response()->json(new AuthTokenResource($result), 201);
+        return response()->json(['message' => 'Controlla la tua email per verificare il tuo account.'], 201);
     }
 }

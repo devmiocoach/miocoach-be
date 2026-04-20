@@ -17,9 +17,14 @@ class WorkoutPlanController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $coachId = $request->user()->coach?->id ?? $request->user()->id;
+        $user = $request->user();
 
-        $plans = WorkoutPlan::where('coach_id', $coachId)
+        // Un client vede solo i piani a lui assegnati; un coach vede i propri piani.
+        $plans = WorkoutPlan::when(
+            $user->hasRole('client'),
+            fn ($q) => $q->where('client_id', $user->client?->id),
+            fn ($q) => $q->where('coach_id', $user->coach?->id),
+        )
             ->withCount('exercises')
             ->latest()
             ->paginate(20);
@@ -29,7 +34,16 @@ class WorkoutPlanController extends Controller
 
     public function store(WorkoutPlanRequest $request, CreateWorkoutPlanAction $action): WorkoutPlanResource
     {
-        $coachId = $request->user()->id;
+        $this->authorize('create', WorkoutPlan::class);
+
+        // Usa il coach_id (FK nella tabella coaches) e non lo user_id:
+        // workout_plans.coach_id referenzia coaches.id.
+        $coachId = $request->user()->coach?->id;
+
+        if (! $coachId) {
+            abort(403, 'Profilo coach non trovato.');
+        }
+
         $plan = $action->execute($request->validated(), $coachId);
 
         return new WorkoutPlanResource($plan);

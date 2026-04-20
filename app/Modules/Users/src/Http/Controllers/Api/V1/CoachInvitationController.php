@@ -4,6 +4,7 @@ namespace App\Modules\Users\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Users\Actions\SendInvitationAction;
+use App\Modules\Users\Http\Requests\SendInvitationRequest;
 use App\Modules\Users\Http\Resources\CoachInvitationResource;
 use App\Modules\Users\Models\CoachInvitation;
 use Illuminate\Http\JsonResponse;
@@ -27,12 +28,8 @@ class CoachInvitationController extends Controller
         return response()->json(CoachInvitationResource::collection($invitations)->response()->getData(true));
     }
 
-    public function send(Request $request, SendInvitationAction $action): JsonResponse
+    public function send(SendInvitationRequest $request, SendInvitationAction $action): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'email:rfc,dns', 'max:255'],
-        ]);
-
         $coach = $request->user()->coach;
 
         if (! $coach) {

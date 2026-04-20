@@ -16,7 +16,7 @@ class RegisterViaInviteAction
         private readonly CreateClientAction $createClient,
     ) {}
 
-    public function handle(string $token, array $data, string $deviceType = 'web', ?string $deviceName = null): array
+    public function handle(string $token, array $data): void
     {
         // Transazione limitata alle sole scritture DB — l'evento viene sparato dopo
         // il commit per evitare che job accodati vengano processati su dati non ancora persistiti.
@@ -52,22 +52,6 @@ class RegisterViaInviteAction
             return $user;
         });
 
-        event(new Registered($user));
-
-        if ($deviceType === 'mobile') {
-            $newToken = $user->createToken($deviceName ?? 'mobile-device');
-            return [
-                'access_token' => $newToken->plainTextToken,
-                'token_type'   => 'Bearer',
-                'user'         => ['id' => $user->id, 'role' => 'client'],
-            ];
-        }
-
-        auth()->login($user);
-        session()->regenerate();
-
-        return [
-            'user' => ['id' => $user->id, 'role' => 'client'],
-        ];
+        event(new Registered($user)); // triggers email verification notification
     }
 }

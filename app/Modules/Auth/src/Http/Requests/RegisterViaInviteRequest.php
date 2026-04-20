@@ -21,10 +21,6 @@ class RegisterViaInviteRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised(),
             ],
-
-            // Device
-            'device_type' => ['sometimes', 'string', 'in:mobile,web'],
-            'device_name' => ['sometimes', 'string', 'max:255'],
         ];
     }
 }

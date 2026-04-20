@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisterAction
 {
-    public function handle(array $data, string $role = 'client', string $deviceType = 'web', ?string $deviceName = null): array
+    public function handle(array $data, string $role = 'client'): void
     {
         $user = User::create([
             'name'     => $data['name'],
@@ -18,22 +18,6 @@ class RegisterAction
 
         $user->assignRole($role);
 
-        event(new Registered($user));
-
-        if ($deviceType === 'mobile') {
-            $token = $user->createToken($deviceName ?? 'mobile-device');
-            return [
-                'access_token' => $token->plainTextToken,
-                'token_type'   => 'Bearer',
-                'user'         => ['id' => $user->id, 'role' => $user->getRoleNames()->first()],
-            ];
-        }
-
-        auth()->login($user);
-        session()->regenerate();
-
-        return [
-            'user' => ['id' => $user->id, 'role' => $user->getRoleNames()->first()],
-        ];
+        event(new Registered($user)); // triggers email verification notification
     }
 }

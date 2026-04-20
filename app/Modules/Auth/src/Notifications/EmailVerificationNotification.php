@@ -2,35 +2,29 @@
 
 namespace App\Modules\Auth\Notifications;
 
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Modules\Auth\Services\JwtService;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Notifications\Notification;
 
-class EmailVerificationNotification extends VerifyEmail
+class EmailVerificationNotification extends Notification
 {
-    protected function verificationUrl(mixed $notifiable): string
+    public function via(mixed $notifiable): array
     {
-        return URL::temporarySignedRoute(
-            'auth.verification.verify',
-            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
-            [
-                'id'   => $notifiable->getKey(),
-                'hash' => sha1($notifiable->getEmailForVerification()),
-            ]
-        );
+        return ['mail'];
     }
 
     public function toMail(mixed $notifiable): MailMessage
     {
-        $url = $this->verificationUrl($notifiable);
+        $token = app(JwtService::class)->generateEmailVerifyToken($notifiable);
+
+        $verifyUrl = rtrim(config('app.url'), '/') . '/api/v1/auth/verify-email/' . $token;
 
         return (new MailMessage())
             ->subject('Verifica il tuo indirizzo email — MioCoach')
             ->greeting('Ciao ' . $notifiable->name . ',')
             ->line('Clicca il pulsante qui sotto per verificare la tua email.')
-            ->action('Verifica Email', $url)
+            ->action('Verifica Email', $verifyUrl)
+            ->line('Il link scade tra 24 ore.')
             ->line('Se non hai creato un account MioCoach, ignora questa email.')
             ->salutation('Il team MioCoach');
     }

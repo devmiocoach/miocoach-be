@@ -3,9 +3,13 @@
 namespace App\Modules\Auth\Actions;
 
 use App\Models\User;
+use App\Modules\Auth\Exceptions\AccountLockedException;
 use App\Modules\Auth\Notifications\NewDeviceLoginNotification;
 use App\Modules\Auth\Services\AccountLockoutService;
+use App\Modules\Auth\Services\AuditLogService;
+use App\Modules\Auth\Services\JwtService;
 use App\Modules\Auth\Services\RateLimiterService;
+use App\Modules\Auth\Services\RefreshTokenService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -14,19 +18,20 @@ use Illuminate\Validation\ValidationException;
 class LoginAction
 {
     public function __construct(
-        private readonly RateLimiterService $rateLimiter,
+        private readonly RateLimiterService   $rateLimiter,
         private readonly AccountLockoutService $lockout,
+        private readonly JwtService           $jwt,
+        private readonly RefreshTokenService  $refreshTokens,
+        private readonly AuditLogService      $audit,
     ) {}
 
-    public function handle(string $email, string $password, string $deviceType = 'web', ?string $deviceName = null): array
+    public function handle(string $email, string $password, ?string $deviceName = null): array
     {
         $this->rateLimiter->check($email);
 
         if ($this->lockout->isLocked($email)) {
             event(new Lockout(request()));
-            throw ValidationException::withMessages([
-                'email' => __('auth.throttle', ['seconds' => $this->lockout->availableIn($email)]),
-            ]);
+            throw new AccountLockedException($this->lockout->availableIn($email));
         }
 
         $email = mb_strtolower($email);
@@ -34,6 +39,7 @@ class LoginAction
         if (! Auth::attempt(['email' => $email, 'password' => $password])) {
             $this->rateLimiter->hit($email);
             $this->lockout->increment($email);
+            $this->audit->log(AuditLogService::LOGIN_FAILED, null, ['email' => $email]);
 
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
@@ -45,40 +51,36 @@ class LoginAction
 
         /** @var User $user */
         $user = Auth::user();
+        Auth::logout(); // stateless — no session
 
         if ($user->hasEnabledTwoFactorAuthentication()) {
-            Auth::logout();
-            return ['two_factor_required' => true, 'email' => $email];
+            $tempToken = $this->jwt->generateTempToken($user);
+
+            return ['two_factor_required' => true, 'temp_token' => $tempToken];
         }
 
         $this->notifyNewDeviceIfNeeded($user);
 
-        if ($deviceType === 'mobile') {
-            $token = $user->createToken($deviceName ?? 'mobile-device');
-            return [
-                'access_token' => $token->plainTextToken,
-                'token_type'   => 'Bearer',
-                'expires_in'   => null,
-                'user'         => ['id' => $user->id, 'role' => $user->getRoleNames()->first()],
-            ];
-        }
+        $accessToken  = $this->jwt->generateAccessToken($user);
+        $refreshToken = $this->refreshTokens->create($user, $deviceName);
 
-        session()->regenerate();
+        $this->audit->log(AuditLogService::LOGIN_SUCCESS, $user->id);
+
         return [
-            'user' => ['id' => $user->id, 'role' => $user->getRoleNames()->first()],
+            'access_token'  => $accessToken,
+            'refresh_token' => $refreshToken,
         ];
     }
 
     private function notifyNewDeviceIfNeeded(User $user): void
     {
-        $ip        = request()->ip();
-        $userAgent = request()->userAgent() ?? 'unknown';
-        // Chiave univoca per IP + user-agent: notifica una volta ogni 30 giorni per coppia
-        $cacheKey  = 'known_device:' . $user->id . ':' . hash('sha256', $ip . '|' . $userAgent);
+        $ip       = request()->ip();
+        $ua       = request()->userAgent() ?? 'unknown';
+        $cacheKey = 'known_device:' . $user->id . ':' . hash('sha256', $ip . '|' . $ua);
 
         if (! Cache::has($cacheKey)) {
             Cache::put($cacheKey, true, now()->addDays(30));
-            $user->notify(new NewDeviceLoginNotification($ip, $userAgent));
+            $user->notify(new NewDeviceLoginNotification($ip, $ua));
         }
     }
 }

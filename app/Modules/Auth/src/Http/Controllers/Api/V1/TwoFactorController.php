@@ -21,12 +21,12 @@ class TwoFactorController extends Controller
             return response()->json(['message' => '2FA è già abilitato sul tuo account.'], 409);
         }
 
-        $action->handle($request->user());
+        $backupCodes = $action->handle($request->user());
 
         return response()->json([
-            'message'        => '2FA abilitato. Scansiona il QR code per configurarlo.',
-            'qr_code_svg'    => $request->user()->twoFactorQrCodeSvg(),
-            'recovery_codes' => $request->user()->recoveryCodes(),
+            'message'      => '2FA abilitato. Scansiona il QR code con la tua app authenticator.',
+            'qr_code_url'  => $request->user()->twoFactorQrCodeSvg(),
+            'backup_codes' => $backupCodes, // shown only once
         ]);
     }
 
@@ -48,9 +48,7 @@ class TwoFactorController extends Controller
             ]);
         }
 
-        $request->validate([
-            'password' => ['required', 'string'],
-        ]);
+        $request->validate(['password' => ['required', 'string']]);
 
         if (! Hash::check($request->password, $request->user()->password)) {
             RateLimiter::hit($rateLimitKey, decay: 60 * 15);
@@ -61,6 +59,9 @@ class TwoFactorController extends Controller
 
         RateLimiter::clear($rateLimitKey);
         $action->handle($request->user());
+
+        // Delete backup codes
+        $request->user()->backupCodes()->delete();
 
         return response()->json(['message' => '2FA disabilitato.']);
     }
