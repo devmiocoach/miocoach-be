@@ -27,14 +27,14 @@ class LoginAction
 
     public function handle(string $email, string $password, ?string $deviceName = null): array
     {
+        $email = mb_strtolower($email);
+
         $this->rateLimiter->check($email);
 
         if ($this->lockout->isLocked($email)) {
             event(new Lockout(request()));
             throw new AccountLockedException($this->lockout->availableIn($email));
         }
-
-        $email = mb_strtolower($email);
 
         if (! Auth::attempt(['email' => $email, 'password' => $password])) {
             $this->rateLimiter->hit($email);

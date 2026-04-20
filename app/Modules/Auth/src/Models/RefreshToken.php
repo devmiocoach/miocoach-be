@@ -22,6 +22,8 @@ class RefreshToken extends Model
 
     public function isValid(): bool
     {
-        return is_null($this->revoked_at) && $this->expires_at->isFuture();
+        return is_null($this->revoked_at)
+            && $this->expires_at !== null
+            && $this->expires_at->isFuture();
     }
 }

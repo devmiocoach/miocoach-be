@@ -6,18 +6,17 @@ use Illuminate\Support\Facades\Cache;
 
 class AccountLockoutService
 {
-    private const MAX_FAILURES    = 5;  // spec: 5 failures
-    private const LOCKOUT_MINUTES = 15; // spec: 15 minutes
+    private const MAX_FAILURES    = 5;
+    private const LOCKOUT_MINUTES = 15;
     private const PREFIX          = 'account_lockout:';
 
     public function increment(string $email): void
     {
-        $key = $this->key($email);
-        $ttl = now()->addMinutes(self::LOCKOUT_MINUTES);
+        $key    = $this->key($email);
+        $expiry = now()->addMinutes(self::LOCKOUT_MINUTES);
 
-        // add() è atomico: crea la chiave solo se non esiste, evitando la race condition
-        // tra increment() e il successivo put() con TTL.
-        Cache::add($key, 0, $ttl);
+        Cache::add($key . ':exp', $expiry->timestamp, $expiry);
+        Cache::add($key, 0, $expiry);
         Cache::increment($key);
     }
 
@@ -28,12 +27,15 @@ class AccountLockoutService
 
     public function availableIn(string $email): int
     {
-        return Cache::getTimeToLive($this->key($email)) ?? 0;
+        $exp = Cache::get($this->key($email) . ':exp');
+
+        return $exp ? max(0, $exp - time()) : 0;
     }
 
     public function clear(string $email): void
     {
         Cache::forget($this->key($email));
+        Cache::forget($this->key($email) . ':exp');
     }
 
     private function key(string $email): string

@@ -44,6 +44,12 @@ class VerifyTwoFactorLoginAction
         $user = User::findOrFail((int) $payload->sub);
 
         // Try TOTP first
+        if (is_null($user->two_factor_secret)) {
+            throw ValidationException::withMessages([
+                'code' => ['2FA non abilitato su questo account.'],
+            ]);
+        }
+
         $totpValid = $this->totp->verify(
             decrypt($user->two_factor_secret),
             $code,
@@ -74,7 +80,7 @@ class VerifyTwoFactorLoginAction
 
     private function consumeBackupCode(User $user, string $code): bool
     {
-        $hash = hash('sha256', $code);
+        $hash = hash('sha256', strtoupper(trim($code)));
 
         $backupCode = TwoFactorBackupCode::where('user_id', $user->id)
             ->where('code_hash', $hash)

@@ -4,6 +4,7 @@ namespace App\Modules\Auth\Http\Middleware;
 
 use App\Models\User;
 use App\Modules\Auth\Services\JwtService;
+use App\Modules\Auth\Services\TokenBlacklistService;
 use Closure;
 use Firebase\JWT\ExpiredException;
 use Illuminate\Http\Request;
@@ -12,7 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class JwtAuthenticate
 {
-    public function __construct(private readonly JwtService $jwt) {}
+    public function __construct(
+        private readonly JwtService            $jwt,
+        private readonly TokenBlacklistService $blacklist,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -30,9 +34,14 @@ class JwtAuthenticate
             return response()->json(['message' => 'Token non valido.'], 401);
         }
 
-        // Reject temp tokens (two_fa_pending) — they cannot authenticate full requests
+        // Reject temp tokens — they cannot authenticate full requests
         if (! empty($payload->two_fa_pending)) {
             return response()->json(['message' => 'Autenticazione incompleta.'], 401);
+        }
+
+        // Reject blacklisted (logged-out) tokens
+        if ($this->blacklist->isBlacklisted($bearer)) {
+            return response()->json(['message' => 'Token revocato.'], 401);
         }
 
         $user = User::find($payload->sub);

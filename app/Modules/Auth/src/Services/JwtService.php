@@ -18,6 +18,10 @@ class JwtService
     {
         $this->privateKey = config('auth.jwt.private_key');
         $this->publicKey  = config('auth.jwt.public_key');
+
+        if (empty($this->privateKey) || empty($this->publicKey)) {
+            throw new \RuntimeException('JWT_PRIVATE_KEY and JWT_PUBLIC_KEY must be configured in .env');
+        }
     }
 
     public function generateAccessToken(User $user): string

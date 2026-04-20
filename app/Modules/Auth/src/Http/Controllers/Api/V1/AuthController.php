@@ -10,6 +10,7 @@ use App\Modules\Auth\Actions\RegisterAction;
 use App\Modules\Auth\Actions\RegisterCoachAction;
 use App\Modules\Auth\Actions\RevokeAllTokensAction;
 use App\Modules\Auth\Http\Requests\LoginRequest;
+use App\Modules\Auth\Services\TokenBlacklistService;
 use App\Modules\Auth\Http\Requests\RegisterCoachRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
 use Illuminate\Http\JsonResponse;
@@ -52,7 +53,7 @@ class AuthController extends Controller
     public function logout(Request $request, LogoutAction $action): JsonResponse
     {
         $refreshToken = $request->cookie('refresh_token');
-        $action->handle($request->user(), $refreshToken);
+        $action->handle($request->user(), $refreshToken, $request->bearerToken());
 
         return response()
             ->json(['message' => 'Logout effettuato con successo.'])
@@ -67,9 +68,14 @@ class AuthController extends Controller
         return $this->tokenResponse($result['access_token'], $result['refresh_token']);
     }
 
-    public function logoutAll(Request $request, RevokeAllTokensAction $action): JsonResponse
+    public function logoutAll(Request $request, RevokeAllTokensAction $action, TokenBlacklistService $blacklist): JsonResponse
     {
         $action->handle($request->user());
+
+        // Blacklist the current access token so it's immediately invalid
+        if ($token = $request->bearerToken()) {
+            $blacklist->add($token);
+        }
 
         return response()
             ->json(['message' => 'Tutti i token sono stati revocati.'])
