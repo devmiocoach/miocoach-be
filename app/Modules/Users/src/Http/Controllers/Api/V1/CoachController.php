@@ -12,6 +12,17 @@ use Illuminate\Http\Request;
 
 class CoachController extends Controller
 {
+    public function show(Request $request): JsonResponse
+    {
+        $coach = $request->user()->coach;
+
+        if (! $coach) {
+            return response()->json(['message' => 'Profilo coach non trovato.'], 404);
+        }
+
+        return response()->json(['data' => new CoachResource($coach->load('user'))]);
+    }
+
     public function update(UpdateCoachProfileRequest $request, UpdateCoachProfileAction $action): JsonResponse
     {
         $coach = $request->user()->coach;

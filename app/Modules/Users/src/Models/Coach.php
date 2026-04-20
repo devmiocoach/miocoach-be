@@ -14,6 +14,9 @@ class Coach extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'user_id',
+        'slug',
+
         // Profilo pubblico
         'bio',
         'tagline',
