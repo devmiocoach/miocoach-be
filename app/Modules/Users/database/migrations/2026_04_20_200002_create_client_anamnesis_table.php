@@ -9,8 +9,7 @@ return new class extends Migration {
     {
         Schema::create('client_anamnesis', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('client_id')->constrained()->cascadeOnDelete();
-            $table->unique('client_id');
+            $table->foreignId('client_id')->unique()->constrained()->cascadeOnDelete();
             $table->text('content_encrypted');
             $table->string('iv', 64);
             $table->string('tag', 64);

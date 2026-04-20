@@ -12,8 +12,7 @@ return new class extends Migration {
             $table->foreignId('coach_id')->constrained()->cascadeOnDelete();
             $table->foreignId('client_id')->constrained()->cascadeOnDelete();
             $table->text('content');
-            $table->timestamp('created_at');
-            $table->index('client_id');
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 
