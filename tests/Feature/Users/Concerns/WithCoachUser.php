@@ -36,4 +36,29 @@ trait WithCoachUser
             \Spatie\Permission\Middleware\RoleMiddleware::class,
         ]);
     }
+
+    protected function createClientForCoach(
+        \App\Modules\Users\Models\Coach $coach,
+        array $userAttrs = [],
+        array $clientAttrs = []
+    ): array {
+        $clientUser = \App\Models\User::factory()->create(array_merge(
+            ['email_verified_at' => now()],
+            $userAttrs
+        ));
+
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
+        $clientUser->assignRole($role);
+
+        $client            = new \App\Modules\Users\Models\Client();
+        $client->user_id   = $clientUser->id;
+        $client->coach_id  = $coach->id;
+        $client->joined_at = now();
+        foreach ($clientAttrs as $key => $value) {
+            $client->$key = $value;
+        }
+        $client->save();
+
+        return [$clientUser, $client];
+    }
 }
