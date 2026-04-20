@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Users\Http\Controllers\Api\V1\AvailabilityController;
+use App\Modules\Users\Http\Controllers\Api\V1\CertificationController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachInvitationController;
@@ -21,6 +22,8 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::get('clients', [CoachController::class, 'clients'])->middleware('throttle:60,1')->name('clients');
         Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
         Route::put('availability', [AvailabilityController::class, 'replace'])->middleware('throttle:20,1')->name('availability');
+        Route::post('certifications', [CertificationController::class, 'store'])->middleware('throttle:20,1')->name('certifications.store');
+        Route::delete('certifications/{certification}', [CertificationController::class, 'destroy'])->middleware('throttle:20,1')->name('certifications.destroy');
     });
 
     // Profilo client
