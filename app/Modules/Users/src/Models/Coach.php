@@ -14,8 +14,9 @@ class Coach extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'slug',
+        // user_id, slug, is_verified, stripe_connect_id, stripe_onboarding_completed
+        // sono esclusi intenzionalmente: assegnati esplicitamente dalle Action,
+        // mai tramite mass assignment da input utente.
 
         // Profilo pubblico
         'bio',

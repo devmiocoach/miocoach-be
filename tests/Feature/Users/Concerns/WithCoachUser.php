@@ -20,7 +20,7 @@ trait WithCoachUser
         $role = Role::firstOrCreate(['name' => 'coach', 'guard_name' => 'web']);
         $user->assignRole($role);
 
-        $coach = Coach::create(array_merge([
+        $coach = Coach::forceCreate(array_merge([
             'user_id' => $user->id,
             'slug'    => 'test-coach-' . $user->id,
         ], $coachAttributes));
