@@ -65,10 +65,34 @@ class CoachController extends Controller
             return response()->json(['message' => 'Profilo coach non trovato.'], 404);
         }
 
-        $clients = $coach->clients()
-            ->with('user')
-            ->latest('joined_at')
-            ->paginate(20);
+        $query = $coach->clients()->with('user');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        if ($request->filled('tags')) {
+            foreach ((array) $request->input('tags') as $tag) {
+                $query->whereJsonContains('tags', $tag);
+            }
+        }
+
+        if ($request->filled('expiresWithin')) {
+            $days = (int) $request->input('expiresWithin');
+            $query->whereNotNull('subscription_expires_at')
+                  ->where('subscription_expires_at', '<=', now()->addDays($days));
+        }
+
+        if ($request->filled('search')) {
+            $term = '%' . $request->input('search') . '%';
+            $query->whereHas('user', fn ($q) => $q->where('name', 'LIKE', $term)
+                                                   ->orWhere('email', 'LIKE', $term));
+        }
+
+        $query->orderByRaw('subscription_expires_at IS NULL, subscription_expires_at ASC');
+
+        $limit   = min((int) $request->input('limit', 20), 100);
+        $clients = $query->paginate($limit);
 
         return response()->json(ClientResource::collection($clients)->response()->getData(true));
     }
