@@ -35,7 +35,7 @@ class ClientDetailResource extends JsonResource
             'subscription_sessions_remaining' => $this->subscription_sessions_remaining,
             'anamnesis' => $this->decryptedAnamnesis,
             'notes' => ClientNoteResource::collection(
-                $this->whenLoaded('notes', fn () => $this->notes->take(10))
+                $this->whenLoaded('notes')
             ),
             'files' => ClientFileResource::collection(
                 $this->whenLoaded('files')

@@ -19,7 +19,12 @@ class CoachClientController extends Controller
             return response()->json(['message' => 'Non autorizzato.'], 403);
         }
 
-        $client->load(['user', 'notes', 'files']);
+        $client->load([
+            'user',
+            'notes'     => fn ($q) => $q->limit(10),
+            'files',
+            'anamnesis',
+        ]);
 
         $decryptedAnamnesis = null;
         $anamnesis = $client->anamnesis;

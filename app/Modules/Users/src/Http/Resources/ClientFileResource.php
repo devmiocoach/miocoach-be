@@ -14,7 +14,7 @@ class ClientFileResource extends JsonResource
             'name'       => $this->name,
             'mime_type'  => $this->mime_type,
             'size'       => $this->size,
-            'created_at' => $this->created_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }
