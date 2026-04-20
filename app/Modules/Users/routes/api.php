@@ -5,6 +5,7 @@ use App\Modules\Users\Http\Controllers\Api\V1\CertificationController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachInvitationController;
+use App\Modules\Users\Http\Controllers\Api\V1\PublicCoachController;
 use App\Modules\Users\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -37,4 +38,10 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::post('', [CoachInvitationController::class, 'send'])->middleware('throttle:10,60')->name('send');
         Route::delete('{invitation}', [CoachInvitationController::class, 'revoke'])->middleware('throttle:20,1')->name('revoke');
     });
+});
+
+Route::prefix('api/v1')->middleware('api')->group(function () {
+    Route::get('coaches/{coach}/public', [PublicCoachController::class, 'show'])
+        ->middleware('throttle:120,1')
+        ->name('coaches.public');
 });
