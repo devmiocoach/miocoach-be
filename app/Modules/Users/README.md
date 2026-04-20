@@ -13,7 +13,7 @@
 | `POST /api/v1/coaches/me/certifications` | ✅ Implementato (R2 upload, CDN URL) |
 | `DELETE /api/v1/coaches/me/certifications/:id` | ✅ Implementato |
 | `GET /api/v1/coaches/:id/public` | ✅ Implementato (SEO metadata, verified certs, next 5 slots) |
-| `GET /api/v1/coaches/me/clients` | ✅ Implementato |
+| `GET /api/v1/coaches/me/clients` | ⚠️ Parzialmente implementato (vedi gap sotto) |
 | `GET /api/v1/users/me` | ✅ Implementato |
 | `PATCH /api/v1/users/me` | ✅ Implementato |
 | `DELETE /api/v1/users/me` | ✅ Implementato |
@@ -28,166 +28,265 @@
 | `POST/PUT/DELETE /coaches/me/packages` | Billing |
 | `POST/PUT/DELETE /coaches/me/subscription-plans` | Billing |
 | `rating` e `reviews_count` nel profilo pubblico | Reviews |
+| `nextBooking` nel listing clienti | Bookings |
+| Storico sessioni nella scheda cliente | Bookings |
+| Storico pagamenti nella scheda cliente | Billing |
+| `POST /auth/accept-invite/:token` (onboarding cliente) | Auth (endpoint aggiuntivo) |
+| Cron jobs (expiring subscriptions, inactive clients, checkin reminders) | Notifications |
+| Push notifications FCM | Notifications |
+| `CheckinFormAssignment` | Forms/Checkins |
 
 ---
 
-## Endpoint precedentemente mancanti (ora implementati)
+## Gap da colmare nel modulo Users — Gestione Clienti
 
-### 1. `GET /api/v1/coaches/me`
-**Stato:** ❌ Mancante  
-Il `CoachController` non ha un metodo `show`/`me`. Attualmente per vedere il proprio profilo coach bisogna chiamare `GET /users/me` che carica la relazione `coach`, ma non restituisce tutti i campi del profilo coach in modo dedicato.
+### Riepilogo migrazioni necessarie
+
+| Migration | Tipo |
+|---|---|
+| `add_client_fields_to_clients_table` | ALTER TABLE clients (tags JSON, phone, avatar_url, subscription_expires_at, subscription_sessions_remaining) |
+| `create_client_notes_table` | CREATE TABLE |
+| `create_client_anamnesis_table` | CREATE TABLE (sostituisce colonna `anamnesi` su clients) |
+| `create_client_files_table` | CREATE TABLE |
+| `drop_anamnesi_from_clients_table` | ALTER TABLE clients (rimuove vecchia colonna `anamnesi` dopo migrazione dati) |
+
+---
+
+### 1. `GET /api/v1/coaches/me/clients` — Incompleto
+
+**Stato:** ⚠️ Esiste ma mancano filtri, campi e ordinamento
+
+#### Campi mancanti nella risposta
+La risposta attuale non include:
+- `firstName`, `lastName`, `email` (da `users` join) — i campi sono nella relazione `user` ma non esposti flat
+- `phone` — colonna mancante sulla tabella `clients`
+- `tags` — colonna JSON mancante sulla tabella `clients`
+- `avatarUrl` — colonna `avatar_url` mancante su `clients`
+- `subscriptionExpiresAt` — colonna `subscription_expires_at` mancante (scritta da modulo Billing)
+- `subscriptionSessionsRemaining` — colonna `subscription_sessions_remaining` mancante (scritta da Billing)
+- `nextBooking` — **fuori scope Users**, viene da modulo Bookings
+
+#### Query params mancanti
+- `status` — filtro per `clients.status`
+- `tags[]` — filtro: `whereJsonContains('tags', $tag)` per ogni tag
+- `expiresWithin` (giorni) — filtro: `subscription_expires_at <= now() + N days`
+- `search` — LIKE su `users.name` o `users.email`
+- `page`, `limit` (default 20) — paginazione (già implementata, limite hardcoded a 20)
+
+#### Ordinamento
+- Attuale: `latest('joined_at')` ❌
+- Spec: `subscription_expires_at ASC` di default (clienti in scadenza prima)
+
+#### Da fare
+- Migration: aggiungere `tags` (JSON), `phone`, `avatar_url`, `subscription_expires_at`, `subscription_sessions_remaining` alla tabella `clients`
+- Aggiornare `Client::$fillable` e `Client::casts()`
+- Aggiornare `CoachController::clients()` con filtri, ordinamento e query params
+- Aggiornare `ClientResource` per esporre i nuovi campi
+
+---
+
+### 2. `POST /api/v1/coaches/me/clients` — Mancante come endpoint
+
+**Stato:** ❌ `CreateClientAction` esiste ma non ha route né FormRequest
+
+**Logica da implementare:**
+1. Valida i dati in ingresso (`CreateClientRequest`)
+2. Cerca `User` per email:
+   - **Se esiste**: usa l'utente esistente, crea `Client` collegato al coach
+   - **Se non esiste**: crea `User` con `email_verified_at = null`, genera token JWT (TTL 7gg) che codifica `{coach_id, email, exp}`, invia email con link `/accept-invite/{token}`
+3. `AuditLogService::log('CLIENT_CREATED', $coach->user_id)`
+4. Ritorna 201 con `ClientResource`
+
+**FormRequest** `CreateClientRequest`:
+- `email` — `required|email`
+- `firstName` — `required|string|max:255`
+- `lastName` — `required|string|max:255`
+- `phone` — `sometimes|nullable|regex:/^[+]?[\d\s\-()] {7,20}$/`
+- `tags` — `sometimes|nullable|array`
+- `tags.*` — `string|max:50`
+- `birth_date` — `sometimes|nullable|date`
+- `gender` — `sometimes|nullable|in:male,female,other`
+- `height_cm` — `sometimes|nullable|numeric|min:50|max:300`
+- `weight_kg` — `sometimes|nullable|numeric|min:20|max:500`
+
+**Aggiornamento `CreateClientAction`**: aggiungere email lookup + invite email + audit log
+
+---
+
+### 3. `GET /api/v1/coaches/me/clients/:id` — Mancante
+
+**Stato:** ❌ Nessun endpoint
+
+**Risposta attesa (scheda completa):**
+- Dati base del cliente + utente
+- `tags`, `internalNotes` (lista `ClientNote` — vedi §6)
+- `anamnesis` — testo decifrato in runtime con `APP_ENCRYPTION_KEY` (da `ClientAnamnesis` — vedi §7)
+- Ultime 10 sessioni — **fuori scope Users** → placeholders vuoti, popolati da Bookings
+- Prossima sessione — **fuori scope Users** → null, popolato da Bookings
+- `subscriptionExpiresAt`, `subscriptionSessionsRemaining`
+- Storico pagamenti — **fuori scope Users** → array vuoto, popolato da Billing
+- Files (`ClientFile[]`) — vedi §8
+
+**Da fare:** route + metodo `show` in `ClientController` + `ClientDetailResource`
+
+---
+
+### 4. `PUT /api/v1/coaches/me/clients/:id` — Mancante come route
+
+**Stato:** ❌ `UpdateClientProfileAction` esiste ma non ha route
 
 **Da fare:**
-- Aggiungere metodo `show` in `CoachController`
-- Registrare route `GET /api/v1/coaches/me`
-- Il `CoachResource` esistente è già completo per questo scopo
+- Registrare route `PUT /api/v1/coaches/me/clients/{client}`
+- Aggiungere metodo `update` a `ClientController`
+- Aggiungere `AuditLogService::log('CLIENT_UPDATED', $coach->user_id, ['client_id' => $client->id])`
+- Autorizzazione: verificare `$client->coach_id === $coach->id`
 
 ---
 
-### 2. `PUT /api/v1/coaches/me` — campi e logica mancanti
-**Stato:** ⚠️ Parzialmente implementato (esiste come `PATCH`)
+### 5. `DELETE /api/v1/coaches/me/clients/:id` — Mancante
 
-#### Colonne mancanti nella tabella `coaches`
-Serve una nuova migration che aggiunga:
-
-| Campo | Tipo | Note |
-|---|---|---|
-| `tagline` | `string` nullable | Frase breve del coach |
-| `mode` | `enum('online','in_person','hybrid')` nullable | Modalità di lavoro |
-| `intro_video_url` | `string` nullable | URL video di presentazione |
-| `price_per_session` | `decimal(8,2)` nullable | Tariffa a sessione (distinta da `hourly_rate`) |
-| `cancellation_window_hours` | `unsignedTinyInteger` nullable | Ore minime per cancellazione |
-| `lat` | `decimal(10,7)` nullable | Latitudine (da geocoding) |
-| `lng` | `decimal(10,7)` nullable | Longitudine (da geocoding) |
-| `is_published` | `boolean` default `false` | Profilo pubblicato nel marketplace (diverso da `is_visible`) |
-
-> **Nota:** `displayName` dalla spec mappa su `users.name`. Gestire l'aggiornamento anche del campo `name` dell'utente dall'endpoint `PUT /coaches/me`.
-
-#### Campi mancanti nel FormRequest `UpdateCoachProfileRequest`
-Aggiungere validazione per:
-- `tagline` — `sometimes|nullable|string|max:150`
-- `mode` — `sometimes|nullable|in:online,in_person,hybrid`
-- `intro_video_url` — `sometimes|nullable|url|max:255`
-- `price_per_session` — `sometimes|nullable|numeric|min:0|max:9999.99`
-- `cancellation_window_hours` — `sometimes|nullable|integer|min:0|max:168`
-- `display_name` (mappato su `users.name`) — `sometimes|nullable|string|max:255`
-- `instagram_url` — campo top-level (spec usa `instagramUrl`), attualmente annidato in `social_links.instagram`
-
-#### Logica mancante in `UpdateCoachProfileAction`
-1. **Geocoding Nominatim**: quando `city` cambia, chiamare `https://nominatim.openstreetmap.org/search?q={city}&format=json` e salvare `lat`/`lng` su `coaches`
-2. **Slug auto-generazione**: se il coach non ha ancora uno slug, generarlo come `slugify(displayName + "-" + city)` con dedup tramite contatore (`-1`, `-2`, ...)
-3. **Audit log**: dopo l'update chiamare `AuditLogService::log('PROFILE_UPDATED', $coach->user_id)` — l'`AuditLogService` esiste già nel modulo Auth
-
-#### Aggiornamenti a `CoachResource`
-Aggiungere i nuovi campi nel resource: `tagline`, `mode`, `intro_video_url`, `price_per_session`, `cancellation_window_hours`, `lat`, `lng`, `is_published`
-
----
-
-### 3. `PUT /api/v1/coaches/me/publish`
-**Stato:** ❌ Mancante completamente
+**Stato:** ❌ Nessun endpoint
 
 **Da fare:**
-- Aggiungere metodo `publish` in `CoachController`
-- Registrare route `PUT /api/v1/coaches/me/publish`
-- Logica: verificare i campi minimi (`bio`, `specializations` non vuoto, `city`, `price_per_session`), poi impostare `is_published = true`
-- Restituire errore `422` con lista campi mancanti se la verifica fallisce
+- Registrare route `DELETE /api/v1/coaches/me/clients/{client}`
+- Aggiungere metodo `destroy` a `ClientController`
+- Soft delete: `$client->delete()` (il modello usa `SoftDeletes`)
+- `AuditLogService::log('CLIENT_DELETED', $coach->user_id, ['client_id' => $client->id])`
+- Ritorna 204
 
 ---
 
-### 4. `PUT /api/v1/coaches/me/availability`
-**Stato:** ❌ Mancante completamente
+### 6. `POST /DELETE /api/v1/coaches/me/clients/:id/tags` — Mancante
+
+**Stato:** ❌ Nessun endpoint, nessuna struttura dati
+
+**Schema:** `tags` è una colonna JSON sull'entità `clients` (array di stringhe)
+
+**Migration:** aggiungere `tags JSON nullable` a `clients` (vedi §1)
 
 **Da fare:**
+- `POST /coaches/me/clients/{client}/tags` — aggiunge un tag all'array JSON
+  - Body: `{ tag: string }` — max 50 caratteri
+  - Autorizzazione: `$client->coach_id === $coach->id`
+- `DELETE /coaches/me/clients/{client}/tags/{tag}` — rimuove tag dall'array
+  - Autorizzazione: stessa
 
-**Migration** — creare tabella `coach_availabilities`:
+**Controller:** nuovo `ClientTagController` con `store` e `destroy`
+
+---
+
+### 7. `POST /api/v1/coaches/me/clients/:id/notes` — Mancante
+
+**Stato:** ❌ Nessun endpoint, nessun modello
+
+**Migration** — creare tabella `client_notes`:
 ```
-id, coach_id (FK coaches), day_of_week (tinyInt 0-6), start_time (time),
-end_time (time), duration_minutes (unsignedSmallInteger), is_recurring (boolean),
-timestamps
+id, coach_id (FK coaches), client_id (FK clients), content (text),
+created_at (solo created, immutabile — no updated_at)
 ```
 
-**Modello** `CoachAvailability` con relazione `belongsTo(Coach::class)`
+**Modello** `ClientNote`:
+- `$fillable`: `content` (coach_id e client_id assegnati dall'Action)
+- Relazione `belongsTo(Client::class)`, `belongsTo(Coach::class)`
+- `$timestamps = false` + aggiungi `created_at` manualmente (record immutabili)
 
-**Relazione** su `Coach`: `hasMany(CoachAvailability::class)`
-
-**Controller** `AvailabilityController` (o metodo `updateAvailability` in `CoachController`) con:
-- Ricezione array `slots[]`
-- Replace completo: `DELETE` tutti gli slot esistenti per `coach_id`, poi `INSERT` i nuovi
-- Wrappato in transazione DB
-
-**FormRequest** `UpdateAvailabilityRequest`:
-- `slots` — `required|array`
-- `slots.*.day_of_week` — `required|integer|between:0,6`
-- `slots.*.start_time` — `required|date_format:H:i`
-- `slots.*.end_time` — `required|date_format:H:i|after:slots.*.start_time`
-- `slots.*.duration_minutes` — `required|integer|min:15|max:240`
-- `slots.*.is_recurring` — `required|boolean`
-
-**Resource** `CoachAvailabilityResource`
-
----
-
-### 5. `POST /api/v1/coaches/me/certifications`
-**Stato:** ❌ Mancante (attualmente le certificazioni sono JSON nella colonna `coaches.certifications`)
-
-Per supportare `DELETE /coaches/me/certifications/:id` ogni certificazione deve avere un ID persistente → serve una tabella dedicata.
+**Relazione** su `Client`: `hasMany(ClientNote::class)` — nelle ultime 10
 
 **Da fare:**
-
-**Migration** — creare tabella `certifications`:
-```
-id, coach_id (FK coaches), name (string), issuer (string nullable),
-issued_at (date nullable), file_url (string), verified_at (timestamp nullable),
-created_at, updated_at
-```
-
-**Modello** `Certification` con relazione `belongsTo(Coach::class)`
-
-**Relazione** su `Coach`: `hasMany(Certification::class)`
-
-**Controller** `CertificationController` con metodi `store` e `destroy`
-
-**FormRequest** `StoreCertificationRequest`:
-- `file` — `required|file|mimes:pdf,jpg,jpeg,png|max:10240`
-- `name` — `required|string|max:255`
-- `issuer` — `nullable|string|max:255`
-- `issued_at` — `nullable|date`
-
-**Servizio** `ObjectStorageService`:
-- Upload su Aruba Object Storage (S3-compatible) nel bucket `documents-prod`
-- Path: `certifications/{coachId}/{uuid}.{ext}`
-- `file_url` salvato = URL CDN Cloudflare (non URL diretto Object Storage)
-- Configurazione via env: `OBJECT_STORAGE_KEY`, `OBJECT_STORAGE_SECRET`, `OBJECT_STORAGE_ENDPOINT`, `OBJECT_STORAGE_BUCKET`, `CDN_BASE_URL`
-
-**Nota:** rimuovere la colonna `certifications` (JSON) dalla tabella `coaches` dopo la migrazione dei dati.
+- `POST /coaches/me/clients/{client}/notes` — aggiunge nota
+  - Body: `{ content: string }` — required, max 5000 caratteri
+  - Salva `coach_id` dall'auth, non modificabile
+- **Controller:** `ClientNoteController::store`
 
 ---
 
-### 6. `DELETE /api/v1/coaches/me/certifications/{id}`
-**Stato:** ❌ Mancante
+### 8. `PUT /api/v1/coaches/me/clients/:id/anamnesis` — Incompleto
 
-**Da fare** (insieme al punto 5):
-- Metodo `destroy` in `CertificationController`
-- Autorizzazione: solo il proprietario può eliminare (`$coach->id === $certification->coach_id`)
-- Delete da DB + eliminazione file da Object Storage tramite `ObjectStorageService`
+**Stato:** ⚠️ La colonna `anamnesi` su `clients` usa Laravel `'encrypted'` cast, ma la spec richiede AES-256-GCM con IV random e modello separato
+
+**Migration** — creare tabella `client_anamnesis`:
+```
+id, client_id (FK clients, unique — una per cliente), content_encrypted (text),
+iv (string 32), created_at, updated_at
+```
+
+**Modello** `ClientAnamnesis`:
+- `$fillable`: `content_encrypted`, `iv`
+- `$hidden`: `content_encrypted`, `iv` (mai esposti in JSON)
+- Relazione `belongsTo(Client::class)`
+
+**Relazione** su `Client`: `hasOne(ClientAnamnesis::class)`
+
+**Servizio** `EncryptionService`:
+- `encrypt(string $plaintext, string $key): array` → `['ciphertext' => ..., 'iv' => ...]`
+  - Usa `openssl_encrypt($plaintext, 'aes-256-gcm', $key, iv: $iv)` con IV random (`random_bytes(12)`, base64 encode)
+- `decrypt(string $ciphertext, string $iv, string $key): string`
+
+**Logica `UpdateClientAnamnesisAction`:**
+1. Genera IV random (`random_bytes(12)`) → base64 encode
+2. Cifra `content` con `EncryptionService::encrypt(content, APP_ENCRYPTION_KEY)`
+3. `updateOrCreate(['client_id' => $client->id], ['content_encrypted' => ..., 'iv' => ...])`
+4. `AuditLogService::log('ANAMNESIS_UPDATED', $coach->user_id, ['client_id' => $client->id])` — MAI loggare il contenuto
+
+**Lettura in `GET /coaches/me/clients/:id`:**
+- Decifra in runtime: `EncryptionService::decrypt(content_encrypted, iv, APP_ENCRYPTION_KEY)`
+- Espone come campo `anamnesis` nel `ClientDetailResource`
+
+**Migration di cleanup** — dopo migrazione dati:
+- `drop_anamnesi_from_clients_table` — rimuove vecchia colonna `clients.anamnesi`
 
 ---
 
-### 7. `GET /api/v1/coaches/{id}/public`
-**Stato:** ❌ Mancante completamente
+### 9. `POST /api/v1/coaches/me/clients/:id/files` — Mancante
 
-**Da fare:**
-- Aggiungere metodo `publicProfile` in `CoachController` (o controller dedicato `PublicCoachController`)
-- Route **senza auth**: `GET /api/v1/coaches/{id}/public`
-- Risposta:
-  - Campi pubblici: `displayName`, `bio`, `tagline`, `specializations`, `mode`, `city`, `rating` medio, `reviews_count`, `price_per_session`, `price_per_hour`
-  - Certificazioni: solo quelle con `verified_at` non null
-  - Prossimi 5 slot disponibili: richiedono la relazione con `coach_availabilities`
-  - Metadata SEO nel campo `seo`: `{ seoTitle, seoDescription, ogImage }`
+**Stato:** ❌ Nessun endpoint, nessun modello
 
-**Resource** `PublicCoachResource` (separata da `CoachResource` per non esporre campi privati)
+**Migration** — creare tabella `client_files`:
+```
+id, coach_id (FK coaches), client_id (FK clients),
+storage_key (string — path su R2), name (string), type (string),
+size (unsignedBigInteger — byte), created_at, updated_at
+```
 
-> **Dipendenza:** `rating` e `reviews_count` vengono dal modulo **Reviews** (ancora da costruire, vedi `MODULES_TODO.md`)
+**Modello** `ClientFile`:
+- `$fillable`: `name`, `type`, `size`
+- Campi protetti: `coach_id`, `client_id`, `storage_key` (assegnati dall'Action)
+
+**Relazione** su `Client`: `hasMany(ClientFile::class)`
+
+**Configurazione R2:**
+- Usare il disco `r2_docs` già configurato in `config/filesystems.php`
+- Path: `client-files/{coachId}/{clientId}/{uuid}.{ext}`
+- **Visibilità: PRIVATA** — i file non sono mai accessibili pubblicamente (accesso via presigned URL)
+
+**Tipi consentiti:** PDF, JPG, JPEG, PNG, MP4 — max 20MB
+
+**FormRequest** `StoreClientFileRequest`:
+- `file` — `required|file|mimes:pdf,jpg,jpeg,png,mp4|max:20480`
+- `name` — `sometimes|nullable|string|max:255` (default: nome originale file)
+
+**Action** `StoreClientFileAction`:
+- Usa `ObjectStorageService::upload($file, 'client-files/{coachId}/{clientId}')` MA con visibilità **privata** (non aggiungere `'public'` come terzo arg)
+- Salva storage_key (non CDN URL — i file client sono privati)
+- Ritorna 201 con `ClientFileResource`
+
+> **Nota:** `ObjectStorageService::upload()` imposta `'public'` per le certificazioni coach (CDN pubblico). Per i file cliente bisogna usare `put($path, $content)` senza visibilità pubblica, oppure aggiungere un parametro `visibility` all'`ObjectStorageService`.
+
+---
+
+### 10. `GET /api/v1/coaches/me/clients/:id/files/:fileId/download` — Mancante
+
+**Stato:** ❌ Nessun endpoint
+
+**Logica:**
+1. Autorizzazione: `$clientFile->client->coach_id === $coach->id`
+2. Genera presigned URL con TTL 15 minuti:
+   ```php
+   Storage::disk('r2_docs')->temporaryUrl($clientFile->storage_key, now()->addMinutes(15));
+   ```
+3. Risposta: `{ url: "https://...", expires_at: "ISO8601" }`
+
+**Controller:** `ClientFileController` con metodi `store` e `download`
 
 ---
 
@@ -195,9 +294,9 @@ created_at, updated_at
 
 | Servizio | Responsabilità |
 |---|---|
-| `GeocodingService` | Chiama Nominatim, restituisce `[lat, lng]` per una città |
-| `ObjectStorageService` | Upload/delete file su Aruba Object Storage S3-compatible |
-| `SlugService` | `slugify(text)` + dedup con contatore |
+| `EncryptionService` | AES-256-GCM encrypt/decrypt con IV random, usa `APP_ENCRYPTION_KEY` |
+
+> Aggiornare `ObjectStorageService::upload()` per accettare parametro `visibility` (default `'public'`; per file cliente passare `'private'`).
 
 ---
 
@@ -205,7 +304,8 @@ created_at, updated_at
 
 | Migration | Tipo |
 |---|---|
-| `add_missing_fields_to_coaches_table` | ALTER TABLE coaches (tagline, mode, intro_video_url, price_per_session, cancellation_window_hours, lat, lng, is_published) |
-| `create_coach_availabilities_table` | CREATE TABLE |
-| `create_certifications_table` | CREATE TABLE |
-| `drop_certifications_json_from_coaches_table` | ALTER TABLE (dopo migrazione dati JSON) |
+| `add_client_fields_to_clients_table` | ALTER TABLE clients (tags JSON, phone, avatar_url, subscription_expires_at, subscription_sessions_remaining) |
+| `create_client_notes_table` | CREATE TABLE |
+| `create_client_anamnesis_table` | CREATE TABLE |
+| `create_client_files_table` | CREATE TABLE |
+| `drop_anamnesi_from_clients_table` | ALTER TABLE (dopo migrazione dati da colonna `anamnesi` a tabella `client_anamnesis`) |
