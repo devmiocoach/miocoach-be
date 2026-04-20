@@ -10,19 +10,19 @@ class ObjectStorageService
 {
     private string $disk = 'r2_docs';
 
-    public function upload(UploadedFile $file, string $folder): array
+    public function upload(UploadedFile $file, string $folder, string $visibility = 'public'): array
     {
         $uuid = (string) Str::uuid();
         $ext  = $file->getClientOriginalExtension();
         $path = $folder . '/' . $uuid . '.' . $ext;
 
-        Storage::disk($this->disk)->put($path, $file->get(), 'public');
+        Storage::disk($this->disk)->put($path, $file->get(), $visibility);
 
         $cdnBase = rtrim(config('app.cdn_base_url', ''), '/');
 
         return [
             'storage_path' => $path,
-            'cdn_url'      => $cdnBase . '/' . $path,
+            'cdn_url'      => $visibility === 'public' ? $cdnBase . '/' . $path : null,
         ];
     }
 

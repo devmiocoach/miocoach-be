@@ -2,6 +2,7 @@
 
 namespace App\Modules\Users\Providers;
 
+use App\Modules\Users\Services\EncryptionService;
 use App\Modules\Users\Services\GeocodingService;
 use App\Modules\Users\Services\ObjectStorageService;
 use App\Modules\Users\Services\SlugService;
@@ -12,6 +13,7 @@ class UsersServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(EncryptionService::class);
         $this->app->singleton(GeocodingService::class);
         $this->app->singleton(SlugService::class);
         $this->app->singleton(ObjectStorageService::class);
