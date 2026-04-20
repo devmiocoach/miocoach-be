@@ -121,4 +121,31 @@ class CoachProfileTest extends TestCase
         $coach->refresh();
         $this->assertEquals('mario-bianchi-roma', $coach->slug);
     }
+
+    public function test_coach_can_publish_profile_when_all_required_fields_are_set(): void
+    {
+        [$user, $coach] = $this->createCoachUser([
+            'bio'               => 'Professional coach',
+            'specializations'   => ['crossfit'],
+            'city'              => 'Milano',
+            'price_per_session' => 50.00,
+        ]);
+
+        $response = $this->actingAsCoach($user)
+            ->putJson('/api/v1/coaches/me/publish');
+
+        $response->assertOk()->assertJsonPath('data.is_published', true);
+        $this->assertDatabaseHas('coaches', ['id' => $coach->id, 'is_published' => true]);
+    }
+
+    public function test_coach_cannot_publish_without_required_fields(): void
+    {
+        [$user, $coach] = $this->createCoachUser();
+
+        $response = $this->actingAsCoach($user)
+            ->putJson('/api/v1/coaches/me/publish');
+
+        $response->assertUnprocessable()
+            ->assertJsonStructure(['message', 'errors' => ['missing_fields']]);
+    }
 }

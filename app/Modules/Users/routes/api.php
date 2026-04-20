@@ -18,6 +18,7 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::get('', [CoachController::class, 'show'])->middleware('throttle:60,1')->name('show');
         Route::patch('', [CoachController::class, 'update'])->middleware('throttle:30,1')->name('update');
         Route::get('clients', [CoachController::class, 'clients'])->middleware('throttle:60,1')->name('clients');
+        Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
     });
 
     // Profilo client
