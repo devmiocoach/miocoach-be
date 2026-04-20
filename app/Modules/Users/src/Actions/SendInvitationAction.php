@@ -17,16 +17,20 @@ class SendInvitationAction
 
     public function handle(Coach $coach, string $email): CoachInvitation
     {
-        if ($coach->pendingInvitations()->count() >= self::MAX_PENDING) {
-            throw ValidationException::withMessages([
-                'email' => ['Hai raggiunto il limite di inviti pendenti. Revoca quelli non utilizzati prima di inviarne altri.'],
-            ]);
-        }
-
         // Revoca + creazione atomiche: se il create fallisce il vecchio invito
         // non viene perso. La notifica email è fuori dalla transazione per
         // evitare side-effect su dati non ancora committati.
+        // Il count check è dentro la transazione con lockForUpdate per evitare
+        // che due richieste concorrenti superino entrambe il limite MAX_PENDING.
         $invitation = DB::transaction(function () use ($coach, $email) {
+            $pendingCount = $coach->pendingInvitations()->lockForUpdate()->count();
+
+            if ($pendingCount >= self::MAX_PENDING) {
+                throw ValidationException::withMessages([
+                    'email' => ['Hai raggiunto il limite di inviti pendenti. Revoca quelli non utilizzati prima di inviarne altri.'],
+                ]);
+            }
+
             $coach->invitations()
                 ->where('email', mb_strtolower($email))
                 ->where('status', 'pending')

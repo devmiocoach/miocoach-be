@@ -8,11 +8,10 @@ class UpdateProfileAction
 {
     public function handle(User $user, array $data): User
     {
-        $user->update(array_filter([
-            'name'   => $data['name'] ?? null,
-            'phone'  => $data['phone'] ?? null,
-            'locale' => $data['locale'] ?? null,
-        ], fn($v) => $v !== null));
+        // $data proviene da FormRequest::validated() con regole 'sometimes':
+        // contiene solo le chiavi presenti nella richiesta.
+        // I campi inviati esplicitamente con null vengono azzerati (es. phone → null).
+        $user->update($data);
 
         return $user->fresh();
     }

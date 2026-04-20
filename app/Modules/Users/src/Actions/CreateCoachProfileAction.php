@@ -10,10 +10,11 @@ class CreateCoachProfileAction
 {
     public function handle(User $user, array $data = []): Coach
     {
-        return Coach::create([
-            'user_id' => $user->id,
-            'slug'    => Str::slug($user->name) . '-' . $user->id,
-
+        // user_id e slug sono fuori da $fillable: assegnazione diretta.
+        $coach = new Coach();
+        $coach->user_id = $user->id;
+        $coach->slug    = Str::slug($user->name) . '-' . $user->id;
+        $coach->fill([
             // Profilo pubblico
             'bio'                 => $data['bio'] ?? null,
             'description'         => $data['description'] ?? null,
@@ -41,5 +42,8 @@ class CreateCoachProfileAction
             'sdi_code'        => $data['sdi_code'] ?? null,
             'pec'             => $data['pec'] ?? null,
         ]);
+        $coach->save();
+
+        return $coach;
     }
 }

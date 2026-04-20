@@ -12,16 +12,22 @@ class CreateClientAction
     {
         $user->assignRole('client');
 
-        return Client::create([
-            'user_id'    => $user->id,
-            'coach_id'   => $coach->id,
+        // I campi privilegiati (user_id, coach_id, joined_at) sono assegnati
+        // direttamente perché esclusi da $fillable per protezione da mass assignment.
+        $client = new Client();
+        $client->user_id  = $user->id;
+        $client->coach_id = $coach->id;
+        $client->joined_at = now();
+        $client->fill([
             'anamnesi'   => $data['anamnesi'] ?? null,
             'goals'      => $data['goals'] ?? null,
             'birth_date' => $data['birth_date'] ?? null,
             'gender'     => $data['gender'] ?? null,
             'height_cm'  => $data['height_cm'] ?? null,
             'weight_kg'  => $data['weight_kg'] ?? null,
-            'joined_at'  => now(),
         ]);
+        $client->save();
+
+        return $client;
     }
 }

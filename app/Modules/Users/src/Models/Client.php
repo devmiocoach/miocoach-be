@@ -13,16 +13,14 @@ class Client extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'coach_id',
+        // user_id, coach_id, status, joined_at sono esclusi intenzionalmente:
+        // vengono assegnati esplicitamente dalle Action, mai via mass assignment.
         'anamnesi',
         'goals',
         'birth_date',
         'gender',
         'height_cm',
         'weight_kg',
-        'status',
-        'joined_at',
     ];
 
     protected function casts(): array

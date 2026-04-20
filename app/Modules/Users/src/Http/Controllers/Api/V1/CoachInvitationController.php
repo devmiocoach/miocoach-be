@@ -4,6 +4,7 @@ namespace App\Modules\Users\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Users\Actions\SendInvitationAction;
+use App\Modules\Users\Http\Resources\CoachInvitationResource;
 use App\Modules\Users\Models\CoachInvitation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class CoachInvitationController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($invitations);
+        return response()->json(CoachInvitationResource::collection($invitations)->response()->getData(true));
     }
 
     public function send(Request $request, SendInvitationAction $action): JsonResponse
@@ -42,12 +43,7 @@ class CoachInvitationController extends Controller
 
         return response()->json([
             'message'    => 'Invito inviato con successo.',
-            'invitation' => [
-                'id'         => $invitation->id,
-                'email'      => $invitation->email,
-                'status'     => $invitation->status,
-                'expires_at' => $invitation->expires_at->toISOString(),
-            ],
+            'invitation' => new CoachInvitationResource($invitation),
         ], 201);
     }
 

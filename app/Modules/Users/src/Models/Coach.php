@@ -14,8 +14,9 @@ class Coach extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'slug',
+        // user_id, slug, is_verified, stripe_connect_id, stripe_onboarding_completed
+        // sono esclusi intenzionalmente: assegnati esplicitamente dalle Action,
+        // mai tramite mass assignment da input utente.
 
         // Profilo pubblico
         'bio',
@@ -44,12 +45,7 @@ class Coach extends Model
         'sdi_code',
         'pec',
 
-        // Pagamenti
-        'stripe_connect_id',
-        'stripe_onboarding_completed',
-
-        // Stato
-        'is_verified',
+        // Visibilità
         'is_visible',
     ];
 
@@ -59,7 +55,9 @@ class Coach extends Model
             'specializations'             => 'array',
             'certifications'              => 'array',
             'social_links'                => 'array',
+            'years_of_experience'         => 'integer',
             'hourly_rate'                 => 'decimal:2',
+            'max_clients'                 => 'integer',
             'is_verified'                 => 'boolean',
             'is_visible'                  => 'boolean',
             'stripe_onboarding_completed' => 'boolean',

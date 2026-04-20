@@ -27,9 +27,17 @@ class UserController extends Controller
 
     public function destroy(Request $request): JsonResponse
     {
+        $user = $request->user();
+
+        // Il cascade DB-level su coaches.user_id non si attiva sul soft delete:
+        // revochiamo gli inviti pendenti esplicitamente prima di eliminare l'account.
+        if ($coach = $user->coach) {
+            $coach->invitations()->where('status', 'pending')->update(['status' => 'revoked']);
+        }
+
         // GDPR art. 17 — soft delete immediato
-        $request->user()->tokens()->delete();
-        $request->user()->delete();
+        $user->tokens()->delete();
+        $user->delete();
 
         return response()->json(['message' => 'Account eliminato. Hard delete schedulato entro 30 giorni.']);
     }

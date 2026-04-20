@@ -9,19 +9,38 @@ class CoachResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $isOwner = $request->user()?->id === $this->user_id;
+
         return [
-            'id'             => $this->id,
-            'slug'           => $this->slug,
-            'bio'            => $this->bio,
-            'description'    => $this->description,
-            'specialization' => $this->specialization,
-            'certifications' => $this->certifications,
-            'hourly_rate'    => $this->hourly_rate,
-            'city'           => $this->city,
-            'is_verified'    => $this->is_verified,
-            'is_visible'     => $this->is_visible,
-            'social_links'   => $this->social_links,
-            'user'           => $this->whenLoaded('user', fn() => new UserResource($this->user)),
+            // Campi pubblici
+            'id'                  => $this->id,
+            'slug'                => $this->slug,
+            'bio'                 => $this->bio,
+            'description'         => $this->description,
+            'website_url'         => $this->website_url,
+            'specializations'     => $this->specializations,
+            'certifications'      => $this->certifications,
+            'social_links'        => $this->social_links,
+            'years_of_experience' => $this->years_of_experience,
+            'hourly_rate'         => $this->hourly_rate,
+            'city'                => $this->city,
+            'is_verified'         => $this->is_verified,
+            'is_visible'          => $this->is_visible,
+            'user'                => $this->whenLoaded('user', fn () => new UserResource($this->user)),
+
+            // Campi visibili solo al proprietario
+            'phone'                       => $this->when($isOwner, $this->phone),
+            'address'                     => $this->when($isOwner, $this->address),
+            'province'                    => $this->when($isOwner, $this->province),
+            'max_clients'                 => $this->when($isOwner, $this->max_clients),
+            'ragione_sociale'             => $this->when($isOwner, $this->ragione_sociale),
+            'p_iva'                       => $this->when($isOwner, $this->p_iva),
+            'codice_fiscale'              => $this->when($isOwner, $this->codice_fiscale),
+            'tax_regime'                  => $this->when($isOwner, $this->tax_regime),
+            'sdi_code'                    => $this->when($isOwner, $this->sdi_code),
+            'pec'                         => $this->when($isOwner, $this->pec),
+            'stripe_connect_id'           => $this->when($isOwner, $this->stripe_connect_id),
+            'stripe_onboarding_completed' => $this->when($isOwner, $this->stripe_onboarding_completed),
         ];
     }
 }

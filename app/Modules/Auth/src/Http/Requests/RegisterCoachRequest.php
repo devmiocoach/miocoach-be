@@ -3,6 +3,7 @@
 namespace App\Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterCoachRequest extends FormRequest
@@ -27,14 +28,14 @@ class RegisterCoachRequest extends FormRequest
             // Profilo opzionale (completabile in seguito)
             'phone'               => ['sometimes', 'string', 'max:20'],
             'city'                => ['sometimes', 'string', 'max:100'],
-            'province'            => ['sometimes', 'string', 'size:2'],
+            'province'            => ['sometimes', 'string', 'size:2', 'alpha'],
             'bio'                 => ['sometimes', 'string', 'max:500'],
             'specializations'     => ['sometimes', 'array'],
             'specializations.*'   => ['string', 'max:100'],
             'years_of_experience' => ['sometimes', 'integer', 'min:0', 'max:60'],
             'hourly_rate'         => ['sometimes', 'numeric', 'min:0', 'max:9999'],
-            'p_iva'          => ['sometimes', 'string', 'regex:/^\d{11}$/'],
-            'codice_fiscale' => ['sometimes', 'string', 'regex:/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i'],
+            'p_iva'          => ['sometimes', 'string', 'regex:/^\d{11}$/', Rule::unique('coaches', 'p_iva')],
+            'codice_fiscale' => ['sometimes', 'string', 'regex:/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/i', Rule::unique('coaches', 'codice_fiscale')],
             'tax_regime'          => ['sometimes', 'string', 'in:forfettario,ordinario,semplificato'],
 
             // Device
