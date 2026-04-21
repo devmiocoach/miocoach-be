@@ -9,7 +9,7 @@ class ClientAnamnesis extends Model
 {
     protected $table = 'client_anamnesis';
 
-    protected $fillable = ['content_encrypted', 'iv', 'tag'];
+    protected $fillable = ['client_id', 'content_encrypted', 'iv', 'tag'];
 
     protected $hidden = ['content_encrypted', 'iv', 'tag'];
 

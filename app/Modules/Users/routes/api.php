@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Users\Http\Controllers\Api\V1\AvailabilityController;
+use App\Modules\Users\Http\Controllers\Api\V1\ClientAnamnesisController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientNoteController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientTagController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachClientController;
@@ -31,6 +32,7 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::post('clients/{client}/tags', [ClientTagController::class, 'store'])->middleware('throttle:60,1')->name('clients.tags.store');
         Route::delete('clients/{client}/tags/{tag}', [ClientTagController::class, 'destroy'])->middleware('throttle:60,1')->name('clients.tags.destroy');
         Route::post('clients/{client}/notes', [ClientNoteController::class, 'store'])->middleware('throttle:60,1')->name('clients.notes.store');
+        Route::put('clients/{client}/anamnesis', [ClientAnamnesisController::class, 'update'])->middleware('throttle:20,1')->name('clients.anamnesis.update');
         Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
         Route::put('availability', [AvailabilityController::class, 'replace'])->middleware('throttle:20,1')->name('availability');
         Route::post('certifications', [CertificationController::class, 'store'])->middleware('throttle:20,1')->name('certifications.store');
