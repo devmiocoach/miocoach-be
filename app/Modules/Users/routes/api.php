@@ -3,6 +3,7 @@
 use App\Modules\Users\Http\Controllers\Api\V1\AvailabilityController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientAnamnesisController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientNoteController;
+use App\Modules\Users\Http\Controllers\Api\V1\ClientFileController;
 use App\Modules\Users\Http\Controllers\Api\V1\ClientTagController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachClientController;
 use App\Modules\Users\Http\Controllers\Api\V1\CertificationController;
@@ -33,6 +34,8 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::delete('clients/{client}/tags/{tag}', [ClientTagController::class, 'destroy'])->middleware('throttle:60,1')->name('clients.tags.destroy');
         Route::post('clients/{client}/notes', [ClientNoteController::class, 'store'])->middleware('throttle:60,1')->name('clients.notes.store');
         Route::put('clients/{client}/anamnesis', [ClientAnamnesisController::class, 'update'])->middleware('throttle:20,1')->name('clients.anamnesis.update');
+        Route::post('clients/{client}/files', [ClientFileController::class, 'store'])->middleware('throttle:20,1')->name('clients.files.store');
+        Route::get('clients/{client}/files/{clientFile}/download', [ClientFileController::class, 'download'])->middleware('throttle:60,1')->name('clients.files.download');
         Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
         Route::put('availability', [AvailabilityController::class, 'replace'])->middleware('throttle:20,1')->name('availability');
         Route::post('certifications', [CertificationController::class, 'store'])->middleware('throttle:20,1')->name('certifications.store');
