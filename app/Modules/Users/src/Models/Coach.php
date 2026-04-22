@@ -111,4 +111,14 @@ class Coach extends Model
     {
         return $this->hasMany(Certification::class)->whereNotNull('verified_at');
     }
+
+    public function contactRequests(): HasMany
+    {
+        return $this->hasMany(CoachContactRequest::class);
+    }
+
+    public function pendingContactRequests(): HasMany
+    {
+        return $this->hasMany(CoachContactRequest::class)->where('status', 'pending');
+    }
 }
