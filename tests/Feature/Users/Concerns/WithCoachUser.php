@@ -11,11 +11,11 @@ trait WithCoachUser
 {
     use RefreshDatabase;
 
-    protected function createCoachUser(array $coachAttributes = []): array
+    protected function createCoachUser(array $userAttributes = [], array $coachAttributes = []): array
     {
-        $user = User::factory()->create([
+        $user = User::factory()->create(array_merge([
             'email_verified_at' => now(),
-        ]);
+        ], $userAttributes));
 
         $role = Role::firstOrCreate(['name' => 'coach', 'guard_name' => 'web']);
         $user->assignRole($role);

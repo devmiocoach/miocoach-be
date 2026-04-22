@@ -13,7 +13,7 @@ class CoachProfileTest extends TestCase
 
     public function test_coach_can_get_own_profile(): void
     {
-        [$user, $coach] = $this->createCoachUser([
+        [$user, $coach] = $this->createCoachUser([], [
             'bio'     => 'Professional coach',
             'city'    => 'Milano',
             'mode'    => 'online',
@@ -124,7 +124,7 @@ class CoachProfileTest extends TestCase
 
     public function test_coach_can_publish_profile_when_all_required_fields_are_set(): void
     {
-        [$user, $coach] = $this->createCoachUser([
+        [$user, $coach] = $this->createCoachUser([], [
             'bio'               => 'Professional coach',
             'specializations'   => ['crossfit'],
             'city'              => 'Milano',

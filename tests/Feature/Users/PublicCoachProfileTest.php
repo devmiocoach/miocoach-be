@@ -12,7 +12,7 @@ class PublicCoachProfileTest extends TestCase
 
     public function test_anyone_can_view_published_coach_public_profile(): void
     {
-        [$user, $coach] = $this->createCoachUser([
+        [$user, $coach] = $this->createCoachUser([], [
             'bio'               => 'Pro coach',
             'tagline'           => 'Transform yourself',
             'specializations'   => ['yoga'],
@@ -32,7 +32,7 @@ class PublicCoachProfileTest extends TestCase
 
     public function test_public_profile_returns_only_verified_certifications(): void
     {
-        [$user, $coach] = $this->createCoachUser(['is_published' => true]);
+        [$user, $coach] = $this->createCoachUser([], ['is_published' => true]);
 
         Certification::create([
             'coach_id'     => $coach->id,
@@ -58,7 +58,7 @@ class PublicCoachProfileTest extends TestCase
 
     public function test_public_profile_returns_next_5_availability_slots(): void
     {
-        [$user, $coach] = $this->createCoachUser(['is_published' => true]);
+        [$user, $coach] = $this->createCoachUser([], ['is_published' => true]);
 
         for ($i = 0; $i < 7; $i++) {
             $coach->availabilities()->create([
@@ -78,7 +78,7 @@ class PublicCoachProfileTest extends TestCase
 
     public function test_unpublished_coach_returns_404_on_public_profile(): void
     {
-        [$user, $coach] = $this->createCoachUser(['is_published' => false]);
+        [$user, $coach] = $this->createCoachUser([], ['is_published' => false]);
 
         $response = $this->getJson('/api/v1/coaches/' . $coach->id . '/public');
 
@@ -87,7 +87,7 @@ class PublicCoachProfileTest extends TestCase
 
     public function test_public_profile_does_not_expose_private_fields(): void
     {
-        [$user, $coach] = $this->createCoachUser([
+        [$user, $coach] = $this->createCoachUser([], [
             'is_published' => true,
             'p_iva'        => '12345678901',
             'pec'          => 'coach@pec.it',
