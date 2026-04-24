@@ -58,6 +58,7 @@ class EncryptionService
         return $result;
     }
 
+    // All records share the same key material — per-entity key derivation is a future enhancement.
     private function deriveKey(): string
     {
         $raw = config('app.encryption_key', '');

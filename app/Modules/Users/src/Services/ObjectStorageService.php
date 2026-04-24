@@ -12,6 +12,10 @@ class ObjectStorageService
 
     public function upload(UploadedFile $file, string $folder, string $visibility = 'public'): array
     {
+        if (! in_array($visibility, ['public', 'private'], true)) {
+            throw new \InvalidArgumentException("Invalid visibility: {$visibility}");
+        }
+
         $uuid = (string) Str::uuid();
         $ext  = $file->getClientOriginalExtension();
         $path = $folder . '/' . $uuid . '.' . $ext;

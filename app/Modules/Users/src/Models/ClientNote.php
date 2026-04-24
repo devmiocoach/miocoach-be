@@ -13,11 +13,6 @@ class ClientNote extends Model
 
     protected $casts = ['created_at' => 'datetime'];
 
-    protected static function booted(): void
-    {
-        static::creating(fn (self $note) => $note->created_at = now());
-    }
-
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);

@@ -13,7 +13,7 @@ class CoachContactRequestResource extends JsonResource
             'id'         => $this->id,
             'status'     => $this->status,
             'message'    => $this->message,
-            'created_at' => $this->created_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
             'client'     => $this->whenLoaded('client', fn () => [
                 'id'         => $this->client->id,
                 'name'       => $this->client->user?->name,

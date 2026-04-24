@@ -41,6 +41,10 @@ class CoachContactRequestController extends Controller
 
         $status = $request->input('status', 'pending');
 
+        if (! in_array($status, ['pending', 'accepted', 'declined', 'all'], true)) {
+            $status = 'pending';
+        }
+
         $requests = $coach->contactRequests()
             ->with('client.user')
             ->when($status !== 'all', fn ($q) => $q->where('status', $status))
