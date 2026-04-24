@@ -1,0 +1,28 @@
+{
+	"name": "app-modules/workout-plans",
+	"description": "",
+	"type": "library",
+	"version": "1.0",
+	"license": "proprietary",
+	"require": {},
+	"autoload": {
+		"psr-4": {
+			"App\\Modules\\WorkoutPlans\\": "src/",
+			"App\\Modules\\WorkoutPlans\\Database\\Factories\\": "database/factories/",
+			"App\\Modules\\WorkoutPlans\\Database\\Seeders\\": "database/seeders/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"App\\Modules\\WorkoutPlans\\Tests\\": "tests/"
+		}
+	},
+	"minimum-stability": "stable",
+	"extra": {
+		"laravel": {
+			"providers": [
+				"App\\Modules\\WorkoutPlans\\Providers\\WorkoutPlansServiceProvider"
+			]
+		}
+	}
+}
