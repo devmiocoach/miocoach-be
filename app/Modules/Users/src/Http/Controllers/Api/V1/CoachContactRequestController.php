@@ -35,10 +35,6 @@ class CoachContactRequestController extends Controller
     {
         $coach = $request->user()->coach;
 
-        if (! $coach) {
-            return response()->json(['message' => 'Profilo coach non trovato.'], 404);
-        }
-
         $status = $request->input('status', 'pending');
 
         $requests = $coach->contactRequests()
@@ -62,7 +58,7 @@ class CoachContactRequestController extends Controller
 
         $coach = $request->user()->coach;
 
-        if (! $coach || $contactRequest->coach_id !== $coach->id) {
+        if ($contactRequest->coach_id !== $coach->id) {
             return response()->json(['message' => 'Non autorizzato.'], 403);
         }
 

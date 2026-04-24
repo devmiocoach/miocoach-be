@@ -17,6 +17,6 @@ class DeclineContactRequestAction
 
         $contactRequest->update(['status' => 'declined']);
 
-        return $contactRequest->fresh();
+        return $contactRequest;
     }
 }

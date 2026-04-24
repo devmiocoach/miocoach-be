@@ -124,9 +124,9 @@ class CoachContactRequestTest extends TestCase
 
         $response->assertOk()->assertJsonPath('data.status', 'declined');
 
-        $this->assertDatabaseMissing('clients', [
+        $this->assertDatabaseHas('clients', [
             'id'       => $client->id,
-            'coach_id' => $coach->id,
+            'coach_id' => null,
         ]);
     }
 }
