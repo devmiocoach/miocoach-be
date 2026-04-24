@@ -38,6 +38,8 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
         Route::put('clients/{client}/anamnesis', [ClientAnamnesisController::class, 'update'])->middleware('throttle:20,1')->name('clients.anamnesis.update');
         Route::post('clients/{client}/files', [ClientFileController::class, 'store'])->middleware('throttle:20,1')->name('clients.files.store');
         Route::get('clients/{client}/files/{clientFile}/download', [ClientFileController::class, 'download'])->middleware('throttle:60,1')->name('clients.files.download');
+        Route::get('contact-requests', [CoachContactRequestController::class, 'index'])->middleware('throttle:60,1')->name('contact-requests.index');
+        Route::put('contact-requests/{contactRequest}', [CoachContactRequestController::class, 'update'])->middleware('throttle:30,1')->name('contact-requests.update');
         Route::put('publish', [CoachController::class, 'publish'])->middleware('throttle:10,1')->name('publish');
         Route::put('availability', [AvailabilityController::class, 'replace'])->middleware('throttle:20,1')->name('availability');
         Route::post('certifications', [CertificationController::class, 'store'])->middleware('throttle:20,1')->name('certifications.store');

@@ -62,4 +62,71 @@ class CoachContactRequestTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_coach_can_list_contact_requests(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser([], ['is_published' => true]);
+        [$clientUser, $client] = $this->createStandaloneClient();
+
+        $req = new CoachContactRequest();
+        $req->coach_id  = $coach->id;
+        $req->client_id = $client->id;
+        $req->message   = 'Voglio allenarti';
+        $req->status    = 'pending';
+        $req->save();
+
+        $response = $this->actingAsCoach($coachUser)
+            ->getJson('/api/v1/coaches/me/contact-requests');
+
+        $response->assertOk();
+        $this->assertCount(1, $response->json('data'));
+    }
+
+    public function test_coach_can_accept_contact_request(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser([], ['is_published' => true]);
+        [$clientUser, $client] = $this->createStandaloneClient();
+
+        $req = new CoachContactRequest();
+        $req->coach_id  = $coach->id;
+        $req->client_id = $client->id;
+        $req->status    = 'pending';
+        $req->save();
+
+        $response = $this->actingAsCoach($coachUser)
+            ->putJson("/api/v1/coaches/me/contact-requests/{$req->id}", [
+                'action' => 'accept',
+            ]);
+
+        $response->assertOk()->assertJsonPath('data.status', 'accepted');
+
+        $this->assertDatabaseHas('clients', [
+            'id'       => $client->id,
+            'coach_id' => $coach->id,
+        ]);
+    }
+
+    public function test_coach_can_decline_contact_request(): void
+    {
+        [$coachUser, $coach] = $this->createCoachUser([], ['is_published' => true]);
+        [$clientUser, $client] = $this->createStandaloneClient();
+
+        $req = new CoachContactRequest();
+        $req->coach_id  = $coach->id;
+        $req->client_id = $client->id;
+        $req->status    = 'pending';
+        $req->save();
+
+        $response = $this->actingAsCoach($coachUser)
+            ->putJson("/api/v1/coaches/me/contact-requests/{$req->id}", [
+                'action' => 'decline',
+            ]);
+
+        $response->assertOk()->assertJsonPath('data.status', 'declined');
+
+        $this->assertDatabaseMissing('clients', [
+            'id'       => $client->id,
+            'coach_id' => $coach->id,
+        ]);
+    }
 }
