@@ -11,6 +11,7 @@ use App\Modules\Users\Http\Controllers\Api\V1\ClientController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachInvitationController;
 use App\Modules\Users\Http\Controllers\Api\V1\CoachListingController;
+use App\Modules\Users\Http\Controllers\Api\V1\CoachContactRequestController;
 use App\Modules\Users\Http\Controllers\Api\V1\PublicCoachController;
 use App\Modules\Users\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,13 @@ Route::prefix('api/v1')->middleware(['jwt.auth', 'verified.email'])->group(funct
     // Profilo client
     Route::prefix('clients/me')->name('clients.me.')->middleware('role:client')->group(function () {
         Route::patch('', [ClientController::class, 'update'])->middleware('throttle:30,1')->name('update');
+    });
+
+    // Contact requests (client -> coach)
+    Route::prefix('coaches')->middleware('role:client')->group(function () {
+        Route::post('{coach}/contact-request', [CoachContactRequestController::class, 'store'])
+            ->middleware('throttle:10,60')
+            ->name('coaches.contact-request.store');
     });
 
     // Inviti coach
