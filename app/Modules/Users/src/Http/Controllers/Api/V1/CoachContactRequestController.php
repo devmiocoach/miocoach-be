@@ -35,6 +35,10 @@ class CoachContactRequestController extends Controller
     {
         $coach = $request->user()->coach;
 
+        if (! $coach) {
+            return response()->json(['message' => 'Profilo coach non trovato.'], 404);
+        }
+
         $status = $request->input('status', 'pending');
 
         $requests = $coach->contactRequests()
