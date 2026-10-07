@@ -1,0 +1,11 @@
+{
+    "name": "Billing",
+    "alias": "billing",
+    "description": "Billing module",
+    "author": "Miocoach",
+    "version": "v1.7.0",
+    "keywords": ["billing"],
+    "priority": 0,
+    "providers": ["Modules\\Billing\\Providers\\BillingServiceProvider"],
+    "files": []
+}

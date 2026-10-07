@@ -1,0 +1,25 @@
+meta {
+  name: Verify Email
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/api/v1/auth/verify-email/{{email_verify_token}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq success
+  res.body.code: eq EMAIL_VERIFIED
+}

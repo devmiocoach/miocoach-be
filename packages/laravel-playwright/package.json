@@ -1,0 +1,11 @@
+{
+    "name": "@miocoach/laravel-playwright",
+    "version": "1.0.0",
+    "type": "module",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "peerDependencies": {
+        "@playwright/test": "^1.0"
+    }
+}

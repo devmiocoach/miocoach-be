@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/progress",
+    "description": "Body measurements and progress tracking",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Progress\\": "app/",
+            "Modules\\Progress\\Database\\Factories\\": "database/factories/",
+            "Modules\\Progress\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Progress\\Tests\\": "tests/"
+        }
+    }
+}

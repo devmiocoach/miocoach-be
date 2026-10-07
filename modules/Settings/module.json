@@ -1,0 +1,11 @@
+{
+    "name": "Settings",
+    "alias": "settings",
+    "description": "Settings module",
+    "author": "Miocoach",
+    "version": "v1.3.1",
+    "keywords": ["settings"],
+    "priority": 0,
+    "providers": ["Modules\\Settings\\Providers\\SettingsServiceProvider"],
+    "files": []
+}

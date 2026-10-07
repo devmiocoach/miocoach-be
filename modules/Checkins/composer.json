@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/checkins",
+    "description": "",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Checkins\\": "app/",
+            "Modules\\Checkins\\Database\\Factories\\": "database/factories/",
+            "Modules\\Checkins\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Checkins\\Tests\\": "tests/"
+        }
+    }
+}

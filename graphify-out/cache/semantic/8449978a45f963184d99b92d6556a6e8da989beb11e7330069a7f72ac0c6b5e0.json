@@ -1,0 +1,1 @@
+{"nodes": [{"id": "seeders_rolesdatabaseseeder", "label": "RolesDatabaseSeeder", "file_type": "code", "source_file": "database/seeders/RolesDatabaseSeeder.php", "source_location": "Database\\Seeders\\RolesDatabaseSeeder", "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}

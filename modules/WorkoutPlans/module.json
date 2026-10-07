@@ -1,0 +1,11 @@
+{
+    "name": "WorkoutPlans",
+    "alias": "workout_plans",
+    "description": "WorkoutPlans module",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["workout_plans"],
+    "priority": 0,
+    "providers": ["Modules\\WorkoutPlans\\Providers\\WorkoutPlansServiceProvider"],
+    "files": []
+}

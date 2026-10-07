@@ -1,0 +1,17 @@
+name: ___Module___ Module Tests
+
+on:
+    pull_request:
+        branches: [main]
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    test:
+        uses: miocoach-dev/miocoach/.github/workflows/test-module.yml@main
+        with:
+            module: ___Module___
+            # dependencies: miocoach/auth  # add space-separated packages if needed

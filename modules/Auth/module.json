@@ -1,0 +1,11 @@
+{
+    "name": "Auth",
+    "alias": "auth",
+    "description": "Authentication module for Miocoach",
+    "author": "Miocoach",
+    "version": "v1.8.1",
+    "keywords": ["auth"],
+    "priority": 0,
+    "providers": ["Modules\\Auth\\Providers\\AuthServiceProvider"],
+    "files": []
+}

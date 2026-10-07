@@ -1,0 +1,19 @@
+meta {
+  name: Validate Invite
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/api/v1/auth/invite/{{invite_token}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+}

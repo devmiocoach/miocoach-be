@@ -1,0 +1,11 @@
+{
+    "name": "Checkins",
+    "alias": "checkins",
+    "description": "Checkins module",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["checkins"],
+    "priority": 0,
+    "providers": ["Modules\\Checkins\\Providers\\CheckinsServiceProvider"],
+    "files": []
+}

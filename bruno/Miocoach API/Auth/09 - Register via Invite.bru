@@ -1,0 +1,50 @@
+meta {
+  name: Register via Invite
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/invite/{{invite_token}}/register
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "firstName": "Giulia",
+    "lastName": "Bianchi",
+    "password": "Password123!",
+    "password_confirmation": "Password123!",
+    "dateOfBirth": "1995-06-15",
+    "gender": "female",
+    "heightCm": 170,
+    "objective": "Perdere peso e tonificare",
+    "fitnessLevel": "intermediate"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.access_token) {
+    bru.setEnvVar('access_token', body.access_token);
+    bru.setEnvVar('user_id', body.user.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+  res.body.refresh_token: isDefined
+  res.body.token_type: eq Bearer
+  res.body.user: isDefined
+}

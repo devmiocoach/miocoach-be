@@ -54,9 +54,18 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    'frontend_url' => env('APP_FRONTEND_URL', env('APP_URL', 'http://localhost')),
+    /*
+    |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Base URL of the client application (SPA / mobile) used when building
+    | links inside notifications. Overrides the framework default, which
+    | points at http://localhost:3000 and is unreachable in this stack.
+    |
+    */
 
-    'cdn_base_url' => env('CDN_BASE_URL', ''),
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
 
     /*
     |--------------------------------------------------------------------------
@@ -90,6 +99,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Available locales
+    |--------------------------------------------------------------------------
+    |
+    | List all locales that your application works with
+    |
+    */
+    'available_locales' => [
+        'en' => 'English',
+        'pt_BR' => 'Português',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |
@@ -102,8 +124,6 @@ return [
     'cipher' => 'AES-256-CBC',
 
     'key' => env('APP_KEY'),
-
-    'encryption_key' => env('APP_ENCRYPTION_KEY', ''),
 
     'previous_keys' => [
         ...array_filter(
@@ -128,5 +148,4 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
-
 ];

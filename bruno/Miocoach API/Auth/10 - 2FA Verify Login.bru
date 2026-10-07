@@ -1,0 +1,45 @@
+meta {
+  name: 2FA Verify Login
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/two-factor/verify
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "temp_token": "{{temp_token}}",
+    "code": "123456",
+    "device_name": "iPhone 15 Pro"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body.access_token) {
+    bru.setEnvVar('access_token', body.access_token);
+    bru.setEnvVar('user_id', body.user.id);
+  }
+}
+
+settings {
+  encodeUrl: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+  res.body.refresh_token: isDefined
+  res.body.token_type: eq Bearer
+  res.body.expires_in: isDefined
+  res.body.user: isDefined
+}

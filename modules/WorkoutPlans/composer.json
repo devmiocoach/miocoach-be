@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/workout_plans",
+    "description": "",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\WorkoutPlans\\": "app/",
+            "Modules\\WorkoutPlans\\Database\\Factories\\": "database/factories/",
+            "Modules\\WorkoutPlans\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\WorkoutPlans\\Tests\\": "tests/"
+        }
+    }
+}
