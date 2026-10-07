@@ -1,0 +1,27 @@
+meta {
+  name: 2FA Enable
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/two-factor/enable
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer {{access_token}}
+}
+
+settings {
+  encodeUrl: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.qr_code_url: isDefined
+  res.body.backup_codes: isDefined
+}

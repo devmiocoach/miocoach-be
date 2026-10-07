@@ -1,0 +1,184 @@
+name: Module Tests
+
+on:
+    pull_request:
+    workflow_call:
+        inputs:
+            module:
+                required: true
+                type: string
+                description: 'StudlyCase module name, e.g. Billing'
+            dependencies:
+                required: false
+                type: string
+                default: ''
+                description: 'Space-separated Composer packages, e.g. miocoach/auth'
+
+jobs:
+    phpunit:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        if: inputs.module != ''
+
+        steps:
+            - name: Checkout module
+              uses: actions/checkout@v4
+              with:
+                  path: module-src
+
+            - name: Clone Miocoach
+              uses: actions/checkout@v4
+              with:
+                  repository: miocoach-dev/miocoach
+                  ref: main
+                  path: miocoach
+
+            - name: Install module from local checkout
+              env:
+                  MODULE: ${{ inputs.module }}
+              run: |
+                  rm -rf miocoach/modules/$MODULE
+                  cp -r module-src miocoach/modules/$MODULE
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  extensions: pdo, pdo_sqlite, mbstring, zip, pcntl, intl, exif
+                  coverage: none
+
+            - name: Install dependencies
+              if: inputs.dependencies != ''
+              working-directory: miocoach
+              env:
+                  DEPENDENCIES: ${{ inputs.dependencies }}
+              run: |
+                  for dep in $DEPENDENCIES; do
+                      composer require "$dep" --dev --no-interaction --no-scripts
+                  done
+
+            - name: Enable modules
+              working-directory: miocoach
+              env:
+                  MODULE: ${{ inputs.module }}
+                  DEPENDENCIES: ${{ inputs.dependencies }}
+              run: |
+                  jq ". + {\"$MODULE\": true}" modules_statuses.json > tmp.json && mv tmp.json modules_statuses.json
+                  for dep in $DEPENDENCIES; do
+                      pkg="${dep#miocoach/}"
+                      mod=$(echo "$pkg" | sed 's/-\([a-z]\)/\u\1/g; s/^\([a-z]\)/\u\1/')
+                      jq ". + {\"$mod\": true}" modules_statuses.json > tmp.json && mv tmp.json modules_statuses.json
+                  done
+
+            - name: Apply patches
+              env:
+                  MODULE: ${{ inputs.module }}
+                  DEPENDENCIES: ${{ inputs.dependencies }}
+              run: |
+                  apply_patches() {
+                      local dir="$1"
+                      for f in "$dir"/*.patch; do
+                          [ -f "$f" ] || continue
+                          echo "Applying patch: $f"
+                          patch -p1 -d miocoach < "$f"
+                      done
+                  }
+                  # Dependencies first (in declared order)
+                  for dep in $DEPENDENCIES; do
+                      pkg="${dep#miocoach/}"
+                      mod=$(echo "$pkg" | sed 's/-\([a-z]\)/\u\1/g; s/^\([a-z]\)/\u\1/')
+                      apply_patches "miocoach/modules/$mod/patches"
+                  done
+                  # Primary module last
+                  apply_patches "miocoach/modules/$MODULE/patches"
+
+            - name: Install Composer dependencies
+              working-directory: miocoach
+              run: composer update --prefer-dist --no-interaction --no-progress --no-scripts && composer dump-autoload --no-scripts
+
+            - name: Setup Laravel environment
+              uses: ./miocoach/.github/actions/setup-laravel
+              with:
+                  working-directory: miocoach
+                  skip-composer: 'true'
+                  skip-php: 'true'
+
+            - name: Run PHPUnit tests
+              working-directory: miocoach
+              env:
+                  MODULE: ${{ inputs.module }}
+              run: php artisan test modules/$MODULE/tests
+
+            - name: Archive miocoach environment
+              run: tar --exclude='miocoach/node_modules' -czf miocoach-env.tar.gz miocoach/
+
+            - name: Upload environment artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: miocoach-env-${{ inputs.module }}
+                  path: miocoach-env.tar.gz
+                  retention-days: 1
+
+    e2e:
+        runs-on: ubuntu-latest
+        timeout-minutes: 30
+        needs: phpunit
+        if: inputs.module != ''
+
+        steps:
+            - name: Download environment artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: miocoach-env-${{ inputs.module }}
+
+            - name: Extract environment
+              run: tar -xzf miocoach-env.tar.gz
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.4'
+                  extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+                  coverage: none
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: npm
+                  cache-dependency-path: miocoach/package-lock.json
+
+            - name: Install npm dependencies
+              working-directory: miocoach
+              run: npm ci
+
+            - name: Install Playwright
+              working-directory: miocoach
+              run: npx playwright install chromium --with-deps
+
+            - name: Start Laravel server
+              working-directory: miocoach
+              run: php artisan serve --host=0.0.0.0 --port=8000 &
+
+            - name: Wait for server
+              run: |
+                  timeout 30 bash -c 'until curl -f http://localhost:8000 > /dev/null 2>&1; do
+                    echo "Waiting for server..."
+                    sleep 2
+                  done'
+                  echo "Server is ready!"
+
+            - name: Run E2E tests
+              working-directory: miocoach
+              env:
+                  APP_URL: http://localhost:8000
+                  MODULE: ${{ inputs.module }}
+              run: npx playwright test modules/$MODULE/tests/e2e --max-failures=2
+
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report-${{ inputs.module }}
+                  path: miocoach/playwright-report/
+                  retention-days: 7

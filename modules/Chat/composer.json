@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/chat",
+    "description": "Chat module — realtime coach/client messaging",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Chat\\": "app/",
+            "Modules\\Chat\\Database\\Factories\\": "database/factories/",
+            "Modules\\Chat\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Chat\\Tests\\": "tests/"
+        }
+    }
+}

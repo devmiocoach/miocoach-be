@@ -1,0 +1,10 @@
+--- a/app/Models/User.php
++++ b/app/Models/User.php
+@@ -12,2 +12,3 @@
+ use Spatie\MediaLibrary\HasMedia;
++use Modules\Billing\Traits\Billable;
+ use Spatie\MediaLibrary\InteractsWithMedia;
+@@ -20,2 +21,3 @@
+ {
++    use Billable;
+     use HasFactory;

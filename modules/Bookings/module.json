@@ -1,0 +1,11 @@
+{
+    "name": "Bookings",
+    "alias": "bookings",
+    "description": "Bookings module — coach and public session booking",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["bookings"],
+    "priority": 0,
+    "providers": ["Modules\\Bookings\\Providers\\BookingsServiceProvider"],
+    "files": []
+}

@@ -1,0 +1,11 @@
+{
+    "name": "Chat",
+    "alias": "chat",
+    "description": "Chat module — realtime coach/client messaging",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["chat"],
+    "priority": 0,
+    "providers": ["Modules\\Chat\\Providers\\ChatServiceProvider"],
+    "files": []
+}

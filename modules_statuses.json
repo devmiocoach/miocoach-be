@@ -1,0 +1,13 @@
+{
+    "Auth": true,
+    "Billing": true,
+    "Roadmap": true,
+    "Settings": true,
+    "Users": true,
+    "WorkoutPlans": true,
+    "Bookings": true,
+    "CoachCommerce": true,
+    "Progress": true,
+    "Chat": true,
+    "Checkins": true
+}

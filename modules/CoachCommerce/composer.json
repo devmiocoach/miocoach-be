@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/coach_commerce",
+    "description": "",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\CoachCommerce\\": "app/",
+            "Modules\\CoachCommerce\\Database\\Factories\\": "database/factories/",
+            "Modules\\CoachCommerce\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\CoachCommerce\\Tests\\": "tests/"
+        }
+    }
+}

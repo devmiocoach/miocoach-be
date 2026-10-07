@@ -1,0 +1,11 @@
+{
+    "name": "Progress",
+    "alias": "progress",
+    "description": "Body measurements, progress charts, and progress photos",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["progress", "measurements", "charts"],
+    "priority": 0,
+    "providers": ["Modules\\Progress\\Providers\\ProgressServiceProvider"],
+    "files": []
+}

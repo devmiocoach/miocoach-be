@@ -3,14 +3,16 @@
 .env
 .env.backup
 .env.production
+.env.testing
 .phpactor.json
 .phpunit.result.cache
-/.cursor/
+/.fleet
 /.idea
 /.nova
 /.phpunit.cache
 /.vscode
 /.zed
+/.claude
 /auth.json
 /node_modules
 /public/build
@@ -19,7 +21,52 @@
 /storage/*.key
 /storage/pail
 /vendor
-_ide_helper.php
+/bootstrap/ssr
+
+# Icon registry
+/resources/js/icon-registry.ts
+
+# Module-specific ignores
+/modules/*/node_modules
+/modules/*/vendor
+/modules/*/resources/js/types/generated.d.ts
+/modules/*/package-lock.json
+/modules/*/dist
+/modules/*/coverage
+/modules/*/*-lock.json
+/modules/*/.turbo
+/modules/*/.cache
+/modules/*.diff
+/modules/*.patch
+/modules/*/.claude
+
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Filament 
+public/css/filament
+public/fonts/filament
+public/js/filament
+public/vendor/livewire/
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/playwright-mcp/
+/.playwright-mcp/
+/storage/laravel-playwright-config.json
+
+# SSL Certificates (generated locally, not tracked)
+/docker/ssl/
+
+# Generated language files
+lang/php_*.json
+
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+.github/skills/*/*
+/docs/

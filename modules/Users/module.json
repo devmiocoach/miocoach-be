@@ -1,0 +1,11 @@
+{
+    "name": "Users",
+    "alias": "users",
+    "description": "User profiles, coach and client management for Miocoach",
+    "author": "Miocoach",
+    "version": "v1.0.0",
+    "keywords": ["users"],
+    "priority": 0,
+    "providers": ["App\\Modules\\Users\\Providers\\UsersServiceProvider"],
+    "files": []
+}

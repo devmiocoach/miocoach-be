@@ -1,0 +1,11 @@
+{
+    "name": "CoachCommerce",
+    "alias": "coach_commerce",
+    "description": "CoachCommerce module",
+    "author": "Miocoach",
+    "version": "v1.0",
+    "keywords": ["coach_commerce"],
+    "priority": 0,
+    "providers": ["Modules\\CoachCommerce\\Providers\\CoachCommerceServiceProvider"],
+    "files": []
+}

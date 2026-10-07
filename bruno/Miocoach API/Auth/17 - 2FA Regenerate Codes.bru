@@ -1,0 +1,26 @@
+meta {
+  name: 2FA Regenerate Codes
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/two-factor/regenerate-codes
+  body: none
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+  Authorization: Bearer {{access_token}}
+}
+
+settings {
+  encodeUrl: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.backup_codes: isDefined
+}

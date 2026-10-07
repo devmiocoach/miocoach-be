@@ -1,0 +1,32 @@
+meta {
+  name: Register Client
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/auth/register/client
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Cosimo Test",
+    "email": "cosimo.user@miocoach.it",
+    "password": "Y42@1b+^Bj5)",
+    "password_confirmation": "Y42@1b+^Bj5)",
+    "device_type": "mobile",
+    "device_name": "Pixel 9"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

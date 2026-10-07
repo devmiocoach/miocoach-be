@@ -1,0 +1,29 @@
+{
+    "name": "miocoach/settings",
+    "description": "",
+    "type": "miocoach-module",
+    "authors": [
+        {
+            "name": "Miocoach",
+            "email": "hello@miocoach.dev"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Settings\\": "app/",
+            "Modules\\Settings\\Database\\Factories\\": "database/factories/",
+            "Modules\\Settings\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Settings\\Tests\\": "tests/"
+        }
+    }
+}
